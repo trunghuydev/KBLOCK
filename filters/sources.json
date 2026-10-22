@@ -1,0 +1,48 @@
+{
+  "version": "0.1.0",
+  "lastUpdated": "2026-10-22",
+  "sources": [
+    {
+      "id": "abpvn",
+      "name": "ABPVN — Vietnamese Ad Filter",
+      "url": "https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn.txt",
+      "license": "GPL-3.0",
+      "licenseUrl": "https://www.gnu.org/licenses/gpl-3.0.en.html",
+      "homepage": "https://github.com/abpvn/abpvn",
+      "format": "easylist",
+      "priority": "high",
+      "focus": "Vietnamese ads, trackers, popups",
+      "enabled": false,
+      "status": "pending-legal-review",
+      "notes": "GPL-3.0. Download-at-runtime approach avoids bundling concern. Legal review required before integration."
+    },
+    {
+      "id": "easylist",
+      "name": "EasyList",
+      "url": "https://easylist.to/easylist/easylist.txt",
+      "license": "CC-BY-SA-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "homepage": "https://easylist.to/",
+      "format": "easylist",
+      "priority": "medium",
+      "focus": "Global English-language ad blocking",
+      "enabled": false,
+      "status": "pending-legal-review",
+      "notes": "CC-BY-SA 3.0. Attribution required. Download-at-runtime preferred."
+    },
+    {
+      "id": "easyprivacy",
+      "name": "EasyPrivacy",
+      "url": "https://easylist.to/easylist/easyprivacy.txt",
+      "license": "CC-BY-SA-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "homepage": "https://easylist.to/",
+      "format": "easylist",
+      "priority": "medium",
+      "focus": "Global tracker blocking",
+      "enabled": false,
+      "status": "pending-legal-review",
+      "notes": "CC-BY-SA 3.0. Same terms as EasyList."
+    }
+  ]
+}
