@@ -1,6 +1,10 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+/**
+ * KBlock — Extension Popup Script (iOS Action Sheet Optimized)
+ */
+import { DEFAULT_STATE, } from '../shared/types';
 function el(id) {
     const element = document.getElementById(id);
     if (!element)
@@ -10,7 +14,13 @@ function el(id) {
 let currentState = null;
 let currentDomain = null;
 async function sendMessage(message) {
-    return browser.runtime.sendMessage(message);
+    try {
+        return (await browser.runtime.sendMessage(message));
+    }
+    catch (err) {
+        console.warn('[KBlock Popup] sendMessage error:', err);
+        return { success: false, error: err instanceof Error ? err.message : 'Message failed' };
+    }
 }
 async function getCurrentDomain() {
     try {
@@ -132,22 +142,32 @@ async function onRemoveWhitelist() {
     }
 }
 async function init() {
+    // Always attach event listeners first so UI is immediately interactive
     try {
-        const [stateResponse, domain] = await Promise.all([
-            sendMessage({ type: 'GET_STATE' }),
-            getCurrentDomain(),
-        ]);
-        if (stateResponse.success && stateResponse.data) {
-            currentState = stateResponse.data;
-            renderState(currentState, domain);
-        }
         el('main-toggle').addEventListener('change', (e) => void onToggleChange(e));
         el('whitelist-btn').addEventListener('click', () => void onAddWhitelist());
         el('remove-whitelist-btn').addEventListener('click', () => void onRemoveWhitelist());
     }
     catch (err) {
-        console.error('[KBlock Popup] Init error:', err);
+        console.warn('[KBlock Popup] Listener attachment:', err);
     }
+    // Load state and current domain with safe fallbacks
+    let state = { ...DEFAULT_STATE };
+    let domain = null;
+    try {
+        const [stateResponse, detectedDomain] = await Promise.all([
+            sendMessage({ type: 'GET_STATE' }),
+            getCurrentDomain(),
+        ]);
+        if (stateResponse.success && stateResponse.data) {
+            state = stateResponse.data;
+        }
+        domain = detectedDomain;
+    }
+    catch (err) {
+        console.warn('[KBlock Popup] State fetch fallback to default:', err);
+    }
+    currentState = state;
+    renderState(currentState, domain);
 }
 void init();
-export {};

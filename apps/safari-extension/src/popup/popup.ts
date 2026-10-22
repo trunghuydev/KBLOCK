@@ -6,10 +6,11 @@
  * KBlock — Extension Popup Script (iOS Action Sheet Optimized)
  */
 
-import type {
-  ExtensionState,
-  Message,
-  MessageResponse,
+import {
+  DEFAULT_STATE,
+  type ExtensionState,
+  type Message,
+  type MessageResponse,
 } from '../shared/types';
 
 function el<T extends HTMLElement>(id: string): T {
@@ -22,7 +23,12 @@ let currentState: ExtensionState | null = null;
 let currentDomain: string | null = null;
 
 async function sendMessage(message: Message): Promise<MessageResponse> {
-  return browser.runtime.sendMessage(message) as Promise<MessageResponse>;
+  try {
+    return (await browser.runtime.sendMessage(message)) as MessageResponse;
+  } catch (err) {
+    console.warn('[KBlock Popup] sendMessage error:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Message failed' };
+  }
 }
 
 async function getCurrentDomain(): Promise<string | null> {
@@ -155,23 +161,35 @@ async function onRemoveWhitelist(): Promise<void> {
 }
 
 async function init(): Promise<void> {
+  // Always attach event listeners first so UI is immediately interactive
   try {
-    const [stateResponse, domain] = await Promise.all([
+    el<HTMLInputElement>('main-toggle').addEventListener('change', (e) => void onToggleChange(e));
+    el('whitelist-btn').addEventListener('click', () => void onAddWhitelist());
+    el('remove-whitelist-btn').addEventListener('click', () => void onRemoveWhitelist());
+  } catch (err) {
+    console.warn('[KBlock Popup] Listener attachment:', err);
+  }
+
+  // Load state and current domain with safe fallbacks
+  let state: ExtensionState = { ...DEFAULT_STATE };
+  let domain: string | null = null;
+
+  try {
+    const [stateResponse, detectedDomain] = await Promise.all([
       sendMessage({ type: 'GET_STATE' }),
       getCurrentDomain(),
     ]);
 
     if (stateResponse.success && stateResponse.data) {
-      currentState = stateResponse.data as ExtensionState;
-      renderState(currentState, domain);
+      state = stateResponse.data as ExtensionState;
     }
-
-    el<HTMLInputElement>('main-toggle').addEventListener('change', (e) => void onToggleChange(e));
-    el('whitelist-btn').addEventListener('click', () => void onAddWhitelist());
-    el('remove-whitelist-btn').addEventListener('click', () => void onRemoveWhitelist());
+    domain = detectedDomain;
   } catch (err) {
-    console.error('[KBlock Popup] Init error:', err);
+    console.warn('[KBlock Popup] State fetch fallback to default:', err);
   }
+
+  currentState = state;
+  renderState(currentState, domain);
 }
 
 void init();
