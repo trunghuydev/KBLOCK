@@ -12,7 +12,7 @@ public class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
     private let appGroupIdentifier = "group.dev.kblock.shared"
 
-    func beginRequest(with context: NSExtensionContext) {
+    public func beginRequest(with context: NSExtensionContext) {
         guard let item = context.inputItems.first as? NSExtensionItem,
               let userInfo = item.userInfo as? [String: Any],
               let message = userInfo[SFExtensionMessageKey] as? [String: Any] else {
