@@ -2,60 +2,111 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>KBlock</title>
   <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
-  <div id="app">
-    <!-- Header -->
-    <header class="header">
-      <div class="header-logo">
-        <img src="../icons/icon-48.png" alt="KBlock" class="logo-icon" width="24" height="24" />
-        <span class="logo-text">KBlock</span>
-      </div>
-      <label class="toggle-switch" id="toggle-label" aria-label="Bật/tắt KBlock">
-        <input type="checkbox" id="main-toggle" checked />
-        <span class="toggle-slider"></span>
-      </label>
-    </header>
-
-    <!-- Status -->
-    <main class="main-content">
-      <div class="status-card" id="status-card">
-        <div class="status-icon" id="status-icon" aria-hidden="true">🛡️</div>
-        <div class="status-text">
-          <div class="status-title" id="status-title">Đang bảo vệ</div>
-          <div class="status-subtitle" id="status-subtitle">Quảng cáo đang bị chặn</div>
+  <div id="app" class="kblock-container">
+    <!-- Header bar -->
+    <header class="kblock-header">
+      <div class="brand">
+        <div class="brand-icon-box">
+          <svg class="brand-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <span class="brand-title">KBlock</span>
+          <span class="brand-badge" id="live-badge">BẢO VỆ</span>
         </div>
       </div>
 
-      <!-- Current domain info -->
-      <div class="domain-section">
-        <div class="domain-label">Trang hiện tại</div>
-        <div class="domain-value" id="current-domain">Đang tải...</div>
-        <button class="whitelist-btn" id="whitelist-btn" aria-label="Thêm vào whitelist">
-          Thêm vào whitelist
-        </button>
-        <button class="whitelist-btn whitelist-btn--remove hidden" id="remove-whitelist-btn" aria-label="Xoá khỏi whitelist">
-          Xoá khỏi whitelist
-        </button>
+      <label class="ios-switch" id="toggle-label" title="Bật/Tắt chặn toàn bộ">
+        <input type="checkbox" id="main-toggle" checked />
+        <span class="ios-slider"></span>
+      </label>
+    </header>
+
+    <!-- Hero Card -->
+    <section class="hero-card" id="status-card">
+      <div class="hero-glow" id="hero-glow"></div>
+      <div class="shield-halo">
+        <div class="shield-circle" id="shield-circle">
+          <svg class="shield-svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1 14.5l-4-4 1.41-1.41L11 13.67l6.59-6.59L19 8.5l-8 8z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="hero-status">
+        <h2 class="status-heading" id="status-title">Đang kích hoạt</h2>
+        <p class="status-desc" id="status-subtitle">Đã lọc quảng cáo & chặn cửa sổ bật lên</p>
+      </div>
+    </section>
+
+    <!-- Current Site Section -->
+    <section class="site-card">
+      <div class="site-card-header">
+        <div class="site-meta">
+          <div class="globe-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          </div>
+          <div class="domain-text">
+            <span class="domain-label">Trang web này</span>
+            <span class="domain-name" id="current-domain">Đang phát hiện...</span>
+          </div>
+        </div>
+        <span class="site-status-pill" id="site-status-pill">Đang chặn</span>
       </div>
 
-      <!-- Filter sources summary -->
-      <div class="filters-section">
-        <div class="section-title">Bộ lọc</div>
-        <ul class="filter-list" id="filter-list" aria-label="Danh sách bộ lọc">
-          <!-- Populated by popup.ts -->
-        </ul>
+      <div class="site-action-row">
+        <button class="action-btn action-btn--whitelist" id="whitelist-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Tắt chặn trên trang này
+        </button>
+        <button class="action-btn action-btn--remove hidden" id="remove-whitelist-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Bật lại chặn trên trang này
+        </button>
       </div>
-    </main>
+    </section>
+
+    <!-- Stats & Modes Grid -->
+    <section class="stats-grid">
+      <div class="stat-tile">
+        <span class="stat-number">38.000+</span>
+        <span class="stat-label">Quy tắc lọc</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-number" id="blocked-counter">0</span>
+        <span class="stat-label">Pop-up triệt tiêu</span>
+      </div>
+    </section>
+
+    <!-- Filter Lists summary -->
+    <section class="filters-card">
+      <div class="filters-card-header">
+        <span class="filters-title">Bộ lọc đang áp dụng</span>
+        <span class="filters-count">3 bộ lọc</span>
+      </div>
+      <ul class="filter-pills" id="filter-list">
+        <!-- Injected via popup.ts -->
+      </ul>
+    </section>
 
     <!-- Footer -->
-    <footer class="footer">
-      <span class="version" id="version-label">v0.1.0</span>
-      <span class="footer-sep" aria-hidden="true">·</span>
-      <a href="#" id="open-settings" class="footer-link">Cài đặt</a>
+    <footer class="kblock-footer">
+      <span class="footer-privacy">🛡️ 100% Cục bộ • Không lưu dữ liệu</span>
+      <span class="footer-version">v0.1.0</span>
     </footer>
   </div>
 

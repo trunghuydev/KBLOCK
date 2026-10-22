@@ -38,15 +38,3 @@ targets:
         INFOPLIST_FILE: Extension/Info.plist
         CODE_SIGN_ENTITLEMENTS: Extension/Extension.entitlements
         GENERATE_INFOPLIST_FILE: NO
-    preBuildScripts:
-      - name: "Copy Web Extension Assets"
-        script: |
-          set -e
-          DIST_DIR="${SRCROOT}/../safari-extension/dist"
-          DEST_DIR="${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}"
-          mkdir -p "${DEST_DIR}"
-          if [ -d "${DIST_DIR}" ]; then
-            cp -R "${DIST_DIR}/"* "${DEST_DIR}/"
-          else
-            echo "warning: ${DIST_DIR} not found. Run 'npm run build' in apps/safari-extension first."
-          fi

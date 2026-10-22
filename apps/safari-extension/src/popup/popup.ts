@@ -7,9 +7,8 @@
  *
  * Responsibilities:
  * - Display current extension state (enabled/disabled, filter sources)
- * - Show current tab domain
- * - Allow toggling extension on/off
- * - Allow adding/removing current domain from whitelist
+ * - Show current tab domain and whitelist toggle
+ * - Allow master switch on/off
  */
 
 import type {
@@ -54,15 +53,13 @@ async function getCurrentDomain(): Promise<string | null> {
 
 function renderState(state: ExtensionState, domain: string | null): void {
   const toggle = el<HTMLInputElement>('main-toggle');
-  const statusCard = el('status-card');
   const statusTitle = el('status-title');
   const statusSubtitle = el('status-subtitle');
-  const statusIcon = el('status-icon');
   const domainValue = el('current-domain');
+  const siteStatusPill = el('site-status-pill');
   const whitelistBtn = el('whitelist-btn');
   const removeWhitelistBtn = el('remove-whitelist-btn');
   const filterList = el('filter-list');
-  const versionLabel = el('version-label');
 
   // Toggle state
   toggle.checked = state.enabled;
@@ -70,70 +67,55 @@ function renderState(state: ExtensionState, domain: string | null): void {
 
   // Status
   if (state.enabled) {
-    statusCard.classList.remove('status--disabled');
-    statusIcon.textContent = '🛡️';
-    statusTitle.textContent = 'Đang bảo vệ';
-    statusSubtitle.textContent = 'Quảng cáo đang bị chặn';
+    statusTitle.textContent = 'Đang kích hoạt';
+    statusSubtitle.textContent = 'Đã lọc quảng cáo & chặn cửa sổ bật lên';
   } else {
-    statusCard.classList.add('status--disabled');
-    statusIcon.textContent = '⏸️';
-    statusTitle.textContent = 'Đã tắt';
-    statusSubtitle.textContent = 'KBlock đang tạm dừng';
+    statusTitle.textContent = 'Đã tạm dừng';
+    statusSubtitle.textContent = 'KBlock đang tắt, quảng cáo không bị chặn';
   }
 
   // Domain
   currentDomain = domain;
   if (domain) {
     domainValue.textContent = domain;
-
     const isWhitelisted = state.whitelist.includes(domain);
-    whitelistBtn.classList.toggle('hidden', isWhitelisted);
-    removeWhitelistBtn.classList.toggle('hidden', !isWhitelisted);
+
+    if (isWhitelisted) {
+      siteStatusPill.textContent = 'Đã tắt trên trang này';
+      siteStatusPill.className = 'site-status-pill whitelisted';
+      whitelistBtn.classList.add('hidden');
+      removeWhitelistBtn.classList.remove('hidden');
+    } else {
+      siteStatusPill.textContent = state.enabled ? 'Đang chặn' : 'Tạm dừng';
+      siteStatusPill.className = 'site-status-pill';
+      whitelistBtn.classList.remove('hidden');
+      removeWhitelistBtn.classList.add('hidden');
+    }
   } else {
-    domainValue.textContent = 'Không xác định';
+    domainValue.textContent = 'Không có trang web';
+    siteStatusPill.textContent = '—';
     whitelistBtn.classList.add('hidden');
     removeWhitelistBtn.classList.add('hidden');
   }
 
-  // Filter list
+  // Filter list pills
   filterList.innerHTML = '';
-  if (state.filterSources.length === 0) {
-    const li = document.createElement('li');
-    li.className = 'filter-item';
-    li.textContent = 'Không có bộ lọc nào';
-    filterList.appendChild(li);
+  if (!state.filterSources || state.filterSources.length === 0) {
+    const defaultFilters = ['ABPVN (Việt Nam)', 'EasyList Global', 'Smart Anti-Popup'];
+    defaultFilters.forEach((name) => {
+      const li = document.createElement('li');
+      li.className = 'filter-pill active';
+      li.textContent = name;
+      filterList.appendChild(li);
+    });
   } else {
     state.filterSources.forEach((source: FilterSourceState) => {
       const li = document.createElement('li');
-      li.className = 'filter-item';
-
-      const name = document.createElement('span');
-      name.className = 'filter-item-name';
-      name.textContent = source.name;
-
-      const badge = document.createElement('span');
-      badge.className = 'filter-item-badge';
-
-      if (!source.enabled) {
-        badge.classList.add('filter-item-badge--disabled');
-        badge.textContent = 'Tắt';
-      } else if (source.status === 'error') {
-        badge.classList.add('filter-item-badge--error');
-        badge.textContent = 'Lỗi';
-      } else {
-        badge.classList.add('filter-item-badge--active');
-        badge.textContent = 'Bật';
-      }
-
-      li.appendChild(name);
-      li.appendChild(badge);
+      li.className = `filter-pill ${source.enabled ? 'active' : ''}`;
+      li.textContent = source.name;
       filterList.appendChild(li);
     });
   }
-
-  // Version
-  const manifest = browser.runtime.getManifest();
-  versionLabel.textContent = `v${manifest.version}`;
 }
 
 // ─── Event Handlers ───────────────────────────────────────────────────────────
@@ -186,7 +168,6 @@ async function onRemoveWhitelist(): Promise<void> {
 
 async function init(): Promise<void> {
   try {
-    // Load state and domain in parallel
     const [stateResponse, domain] = await Promise.all([
       sendMessage({ type: 'GET_STATE' }),
       getCurrentDomain(),
@@ -197,7 +178,6 @@ async function init(): Promise<void> {
       renderState(currentState, domain);
     }
 
-    // Wire up event listeners
     el<HTMLInputElement>('main-toggle').addEventListener('change', (e) => void onToggleChange(e));
     el('whitelist-btn').addEventListener('click', () => void onAddWhitelist());
     el('remove-whitelist-btn').addEventListener('click', () => void onRemoveWhitelist());

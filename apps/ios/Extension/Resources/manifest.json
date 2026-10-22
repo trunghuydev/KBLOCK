@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "KBlock",
+  "version": "0.1.0",
+  "description": "Trình chặn quảng cáo Safari miễn phí cho iOS — Ưu tiên website Việt Nam",
+
+  "background": {
+    "service_worker": "background/background.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content/content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "KBlock"
+  },
+
+  "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
+    "storage"
+  ],
+
+  "host_permissions": [
+    "*://*/*"
+  ],
+
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "base_rules",
+        "enabled": true,
+        "path": "rules/base.json"
+      }
+    ]
+  },
+
+  "browser_specific_settings": {
+    "safari": {
+      "strict_min_version": "15.0"
+    }
+  }
+}

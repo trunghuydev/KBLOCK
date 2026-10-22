@@ -1,16 +1,17 @@
 /**
  * Build script: copies non-TypeScript assets from src/ to dist/
- * Runs after `tsc` compiles .ts → .js
+ * AND syncs full dist bundle into apps/ios/Extension/Resources/
  *
  * Usage: node scripts/copy-assets.mjs
  */
-import { cpSync, mkdirSync, readdirSync, statSync } from 'fs';
+import { cpSync, mkdirSync, readdirSync, rmSync, existsSync } from 'fs';
 import { join, extname, relative, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const srcDir = join(__dirname, '..', 'src');
 const distDir = join(__dirname, '..', 'dist');
+const iosExtensionResourcesDir = join(__dirname, '..', '..', 'ios', 'Extension', 'Resources');
 
 const ASSET_EXTENSIONS = new Set(['.json', '.html', '.css', '.png', '.svg', '.ico']);
 
@@ -37,3 +38,9 @@ console.log('[KBlock] Copying assets src/ → dist/');
 mkdirSync(distDir, { recursive: true });
 copyAssets(srcDir, distDir);
 console.log('[KBlock] Assets copied ✓');
+
+// Sync complete dist/ into iOS Extension Resources
+console.log('[KBlock] Syncing dist/ → apps/ios/Extension/Resources/');
+mkdirSync(iosExtensionResourcesDir, { recursive: true });
+cpSync(distDir, iosExtensionResourcesDir, { recursive: true });
+console.log('[KBlock] Synced to iOS Extension Resources ✓');
