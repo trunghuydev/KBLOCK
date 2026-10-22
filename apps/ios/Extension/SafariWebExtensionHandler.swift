@@ -7,6 +7,7 @@ import os.log
 
 let logger = Logger(subsystem: "dev.kblock.KBlock.Extension", category: "WebExtensionHandler")
 
+@objc(SafariWebExtensionHandler)
 public class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
     private let appGroupIdentifier = "group.dev.kblock.shared"
