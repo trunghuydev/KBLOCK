@@ -47,3 +47,19 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.kblock.KBlock.Extension
         INFOPLIST_FILE: Extension/Info.plist
         GENERATE_INFOPLIST_FILE: NO
+
+schemes:
+  KBlock:
+    build:
+      targets:
+        KBlock: all
+        Extension: [build]
+    run:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
