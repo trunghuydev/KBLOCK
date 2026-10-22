@@ -27,6 +27,8 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
     dependencies:
       - target: Extension
+        embed: true
+        codeSign: true
 
   Extension:
     type: app-extension
