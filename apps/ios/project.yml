@@ -22,7 +22,6 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.kblock.KBlock
         INFOPLIST_FILE: KBlock/Info.plist
-        CODE_SIGN_ENTITLEMENTS: KBlock/KBlock.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: NO
     dependencies:
@@ -42,5 +41,4 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.kblock.KBlock.Extension
         INFOPLIST_FILE: Extension/Info.plist
-        CODE_SIGN_ENTITLEMENTS: Extension/Extension.entitlements
         GENERATE_INFOPLIST_FILE: NO
