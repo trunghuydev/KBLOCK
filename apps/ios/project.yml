@@ -31,7 +31,10 @@ targets:
     type: app-extension
     platform: iOS
     sources:
-      - path: Extension
+      - path: Extension/SafariWebExtensionHandler.swift
+      - path: Extension/Resources
+        type: folder
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.kblock.KBlock.Extension
