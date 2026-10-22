@@ -1,10 +1,5 @@
 [
   {
-    "comment": "KBlock Base Rules v0.1.0 — Proof of Concept DNR Ruleset",
-    "comment2": "This is a minimal ruleset for Phase 1 testing only.",
-    "comment3": "Full filter integration happens in Phase 3."
-  },
-  {
     "id": 1,
     "priority": 1,
     "action": { "type": "block" },
@@ -19,7 +14,7 @@
     "action": { "type": "block" },
     "condition": {
       "urlFilter": "||googleadservices.com^",
-      "resourceTypes": ["script", "xmlhttprequest", "image"]
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
     }
   },
   {
@@ -36,66 +31,12 @@
     "priority": 1,
     "action": { "type": "block" },
     "condition": {
-      "urlFilter": "||ads.yahoo.com^",
-      "resourceTypes": ["script", "xmlhttprequest", "image"]
-    }
-  },
-  {
-    "id": 5,
-    "priority": 1,
-    "action": { "type": "block" },
-    "condition": {
-      "urlFilter": "||static.ads-twitter.com^",
-      "resourceTypes": ["script", "xmlhttprequest"]
-    }
-  },
-  {
-    "id": 6,
-    "priority": 1,
-    "action": { "type": "block" },
-    "condition": {
-      "urlFilter": "||connect.facebook.net/*/fbevents.js",
-      "resourceTypes": ["script"]
-    }
-  },
-  {
-    "id": 7,
-    "priority": 1,
-    "action": { "type": "block" },
-    "condition": {
-      "urlFilter": "||sc.imp.admatic.com.tr^",
-      "resourceTypes": ["script", "xmlhttprequest"]
-    }
-  },
-  {
-    "id": 101,
-    "priority": 1,
-    "action": { "type": "block" },
-    "condition": {
-      "urlFilter": "||quangcao.zing.vn^",
+      "urlFilter": "||adservice.google.com^",
       "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
     }
   },
   {
-    "id": 102,
-    "priority": 1,
-    "action": { "type": "block" },
-    "condition": {
-      "urlFilter": "||ads.vccorp.vn^",
-      "resourceTypes": ["script", "xmlhttprequest", "image"]
-    }
-  },
-  {
-    "id": 103,
-    "priority": 1,
-    "action": { "type": "block" },
-    "condition": {
-      "urlFilter": "||adx.vccorp.vn^",
-      "resourceTypes": ["script", "xmlhttprequest", "image"]
-    }
-  },
-  {
-    "id": 104,
+    "id": 5,
     "priority": 1,
     "action": { "type": "block" },
     "condition": {
@@ -104,43 +45,268 @@
     }
   },
   {
-    "id": 105,
+    "id": 6,
     "priority": 1,
     "action": { "type": "block" },
     "condition": {
       "urlFilter": "||engine.admicro.vn^",
-      "resourceTypes": ["script", "xmlhttprequest"]
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
     }
   },
   {
-    "id": 106,
+    "id": 7,
     "priority": 1,
     "action": { "type": "block" },
     "condition": {
       "urlFilter": "||tracking.admicro.vn^",
-      "resourceTypes": ["script", "xmlhttprequest"]
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
     }
   },
   {
-    "id": 107,
+    "id": 8,
     "priority": 1,
     "action": { "type": "block" },
     "condition": {
-      "urlFilter": "||cdn.adnetwork.vn^",
-      "resourceTypes": ["script", "xmlhttprequest", "image"]
+      "urlFilter": "||media1.admicro.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
     }
   },
   {
-    "id": 108,
+    "id": 9,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||ads.vccorp.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 10,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||adx.vccorp.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 11,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||vcads.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 12,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||eclick.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 13,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||s.eclick.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 14,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||media.eclick.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 15,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||quangcao.zing.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 16,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||adtima.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 17,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||static.adtima.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 18,
     "priority": 1,
     "action": { "type": "block" },
     "condition": {
       "urlFilter": "||c.vnggames.net/ads^",
-      "resourceTypes": ["script", "xmlhttprequest"]
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
     }
   },
   {
-    "id": 201,
+    "id": 19,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||ants.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 20,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||blueseed.tv^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 21,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||novanet.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 22,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||ambientplatform.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 23,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||taboola.com^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 24,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||outbrain.com^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 25,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||mgid.com^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 26,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||criteo.com^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 27,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||criteo.net^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 28,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||adnxs.com^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 29,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||popads.net^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 30,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||popcash.net^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 31,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||propellerads.com^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 32,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||exoclick.com^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 33,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||adsterra.com^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 34,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||monetag.com^",
+      "resourceTypes": ["script", "xmlhttprequest", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 35,
     "priority": 1,
     "action": { "type": "block" },
     "condition": {
@@ -149,11 +315,20 @@
     }
   },
   {
-    "id": 202,
+    "id": 36,
     "priority": 1,
     "action": { "type": "block" },
     "condition": {
       "urlFilter": "||google-analytics.com/gtag/js",
+      "resourceTypes": ["script"]
+    }
+  },
+  {
+    "id": 37,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||connect.facebook.net/*/fbevents.js",
       "resourceTypes": ["script"]
     }
   }

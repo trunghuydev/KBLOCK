@@ -7,20 +7,10 @@
  *
  * Runs at document_start on all pages where the extension has permission.
  *
- * Responsibilities:
- * 1. Suppress popup windows opened via window.open() (balanced/strict mode)
- * 2. Remove common overlay/interstitial ad elements via MutationObserver
- * 3. Report detected popups to background for statistics
- *
- * Limitations (documented, NOT hidden):
- * - Cannot intercept popups opened by native browser UI (iOS Safari restriction)
- * - Cannot access cross-origin iframes
- * - Only runs on pages the user has granted the extension permission for
- * - In "balanced" mode, we only block popups opened within 500ms of page load
- *   to avoid blocking legitimate auth flows (OAuth, payment confirmations, etc.)
- *
- * SECURITY: This script does NOT execute any code fetched from filter lists.
- * All logic is hardcoded here.
+ * Features:
+ * 1. Cosmetic Filtering (CSS Injection): Hides ad banner containers and placeholders
+ * 2. Smart Popup Blocker: Intercepts ad popups, popunders, and clickjack overlays
+ * 3. MutationObserver: Continuously removes dynamic ad banners and modal overlays
  */
 
 import type { Message, MessageResponse, AntiPopupMode } from '../shared/types';
@@ -37,13 +27,126 @@ function sendMessage(message: Message): Promise<MessageResponse> {
   return browser.runtime.sendMessage(message) as Promise<MessageResponse>;
 }
 
-// ─── Popup Suppression ────────────────────────────────────────────────────────
+// ─── Cosmetic Filtering (CSS Injection) ───────────────────────────────────────
+
+const AD_SELECTORS = [
+  // Google Ads
+  'ins.adsbygoogle',
+  'div[id^="google_ads_"]',
+  'div[id^="aswift_"]',
+  'iframe[src*="googlesyndication.com"]',
+  'iframe[src*="doubleclick.net"]',
+
+  // Vietnamese Ad Networks
+  '[class*="admicro"]',
+  '[id*="admicro"]',
+  '[class*="vccorp"]',
+  '[id*="vccorp"]',
+  '[class*="eclick"]',
+  '[id*="eclick"]',
+  '[class*="quangcao"]',
+  '[id*="quangcao"]',
+  '[class*="quang-cao"]',
+  '[id*="quang-cao"]',
+  '[class*="ambient"]',
+  '[class*="novanet"]',
+  '[class*="adtima"]',
+
+  // Common Ad Banners & Placeholders
+  '[class*="banner-ads"]',
+  '[class*="ad-banner"]',
+  '[id*="banner-ads"]',
+  '[id*="ad-banner"]',
+  '[class*="top-banner-ad"]',
+  '[class*="bottom-banner-ad"]',
+  '[class*="sticky-banner"]',
+  '[class*="sidebar-ads"]',
+  '.advertisement',
+  '.ads-holder',
+  '.ad-box',
+
+  // Recommendation & Native Ads Widgets
+  '[class*="taboola"]',
+  '[class*="outbrain"]',
+  '[class*="mgid"]',
+
+  // Overlays & Popups
+  '[class*="popup-overlay"]',
+  '[class*="ad-overlay"]',
+  '[class*="ads-overlay"]',
+  '[id*="popup-overlay"]',
+  '[id*="ad-popup"]',
+  '[class*="qc-popup"]',
+  '[id*="qc-popup"]',
+  '[class*="quangcao-popup"]',
+];
+
+const STYLE_ID = 'kblock-cosmetic-filters';
+
+function injectCosmeticStyles(): void {
+  if (document.getElementById(STYLE_ID)) return;
+
+  const style = document.createElement('style');
+  style.id = STYLE_ID;
+  style.textContent = `
+    ${AD_SELECTORS.join(',\n    ')} {
+      display: none !important;
+      visibility: hidden !important;
+      height: 0 !important;
+      max-height: 0 !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+  `;
+
+  // Inject into documentElement so it applies before body exists
+  (document.head || document.documentElement).appendChild(style);
+}
+
+function removeCosmeticStyles(): void {
+  const existing = document.getElementById(STYLE_ID);
+  if (existing) {
+    existing.remove();
+  }
+}
+
+// ─── Smart Popup & Popunder Suppression ───────────────────────────────────────
 
 const PAGE_LOAD_TIMESTAMP = Date.now();
-const BALANCED_MODE_WINDOW_MS = 500; // Only block popups in first 500ms in balanced mode
-
 let originalWindowOpen: typeof window.open | null = null;
 let popupBlockCount = 0;
+
+const AD_URL_PATTERNS = [
+  /popads/i,
+  /popcash/i,
+  /propellerads/i,
+  /exoclick/i,
+  /adsterra/i,
+  /monetag/i,
+  /clickadu/i,
+  /trafficjunky/i,
+  /admicro/i,
+  /eclick/i,
+  /vccorp/i,
+  /doubleclick/i,
+  /googlesyndication/i,
+  /affiliate/i,
+  /tracking/i,
+  /banner/i,
+  /casino/i,
+  /nohu/i,
+  /bet88/i,
+  /fb88/i,
+  /w88/i,
+  /kubet/i,
+];
+
+function isLikelyAdUrl(url: string): boolean {
+  if (!url || url === 'about:blank' || url === 'javascript:void(0)') {
+    return true; // Blank target popups are often used as popunder containers
+  }
+  return AD_URL_PATTERNS.some((pattern) => pattern.test(url));
+}
 
 function installPopupBlocker(mode: AntiPopupMode): void {
   if (mode === 'off') {
@@ -51,7 +154,6 @@ function installPopupBlocker(mode: AntiPopupMode): void {
     return;
   }
 
-  // Save original before overriding
   if (!originalWindowOpen) {
     originalWindowOpen = window.open.bind(window);
   }
@@ -61,24 +163,39 @@ function installPopupBlocker(mode: AntiPopupMode): void {
     target?: string,
     features?: string,
   ): Window | null {
+    const urlString = String(url ?? '');
     const timeSinceLoad = Date.now() - PAGE_LOAD_TIMESTAMP;
 
-    // In balanced mode: only block if opened very early (likely ad popup, not user-triggered)
-    // In strict mode: block all window.open calls
-    const shouldBlock =
-      mode === 'strict' ||
-      (mode === 'balanced' && timeSinceLoad < BALANCED_MODE_WINDOW_MS);
+    let shouldBlock = false;
+
+    if (mode === 'strict') {
+      shouldBlock = true;
+    } else if (mode === 'balanced') {
+      // 1. Automatic popups within the initial 3 seconds are always blocked
+      if (timeSinceLoad < 3000) {
+        shouldBlock = true;
+      }
+      // 2. Any popup pointing to a known ad network or suspicious target
+      else if (isLikelyAdUrl(urlString)) {
+        shouldBlock = true;
+      }
+      // 3. Blank target popups commonly used by popunders
+      else if (!urlString || urlString === 'about:blank') {
+        shouldBlock = true;
+      }
+    }
 
     if (shouldBlock) {
       popupBlockCount++;
-      void sendMessage({ type: 'POPUP_DETECTED', payload: { url: String(url ?? '') } }).catch(
-        () => undefined,
-      );
-      console.warn('[KBlock] Blocked popup:', url);
+      void sendMessage({
+        type: 'POPUP_DETECTED',
+        payload: { url: urlString },
+      }).catch(() => undefined);
+
+      console.warn('[KBlock] Blocked popup:', urlString);
       return null;
     }
 
-    // Allow: call original
     return originalWindowOpen
       ? originalWindowOpen(url as string, target, features)
       : null;
@@ -92,63 +209,72 @@ function restoreWindowOpen(): void {
   }
 }
 
-// ─── Overlay Ad Removal ───────────────────────────────────────────────────────
+// ─── Clickjack Popunder Overlay Interception ─────────────────────────────────
 
-/**
- * CSS selectors for common ad overlay patterns.
- *
- * These are STRUCTURAL selectors (id/class patterns) — they do NOT
- * execute arbitrary code from filter lists.
- *
- * Sourced from: common Vietnamese ad overlay patterns (manually curated)
- */
-const OVERLAY_SELECTORS: string[] = [
-  // Generic overlay patterns
-  '[class*="popup-overlay"]',
-  '[class*="ad-overlay"]',
-  '[class*="ads-overlay"]',
-  '[id*="popup-overlay"]',
-  '[id*="ad-popup"]',
-  // Vietnamese ad patterns (manually identified)
-  '[class*="qc-popup"]',
-  '[id*="qc-popup"]',
-  '[class*="quangcao-popup"]',
-];
+function handleGlobalClick(event: MouseEvent): void {
+  if (!isEnabled || antiPopupMode === 'off') return;
+
+  const target = event.target as HTMLElement | null;
+  if (!target) return;
+
+  // Detect full-screen invisible clickjacking overlays
+  if (target !== document.body && target !== document.documentElement) {
+    const style = window.getComputedStyle(target);
+    const isFixedOrAbsolute =
+      style.position === 'fixed' || style.position === 'absolute';
+    const isHighZIndex = parseInt(style.zIndex, 10) > 100;
+    const isFullCover =
+      target.offsetWidth >= window.innerWidth * 0.9 &&
+      target.offsetHeight >= window.innerHeight * 0.9;
+
+    // Check if it's an overlay that has no visible text
+    if (isFixedOrAbsolute && isHighZIndex && isFullCover && target.innerText.trim().length === 0) {
+      event.preventDefault();
+      event.stopPropagation();
+      target.remove();
+      console.warn('[KBlock] Removed clickjacking popunder overlay');
+    }
+  }
+}
+
+// ─── MutationObserver Dynamic Cleanup ─────────────────────────────────────────
 
 let observer: MutationObserver | null = null;
 
-function removeOverlays(): void {
+function scanAndRemoveAds(): void {
   if (!isEnabled) return;
 
-  for (const selector of OVERLAY_SELECTORS) {
+  // Remove any remaining overlay elements
+  for (const selector of [
+    '[class*="popup-overlay"]',
+    '[class*="ad-overlay"]',
+    '[class*="qc-popup"]',
+    '[id*="qc-popup"]',
+  ]) {
     try {
       const elements = document.querySelectorAll(selector);
       elements.forEach((el) => {
-        // Only remove if it looks like an overlay (fixed/absolute positioning covering viewport)
         const style = window.getComputedStyle(el);
-        const isOverlay =
+        if (
           (style.position === 'fixed' || style.position === 'absolute') &&
-          parseInt(style.zIndex, 10) > 100;
-
-        if (isOverlay) {
+          parseInt(style.zIndex, 10) > 100
+        ) {
           el.remove();
         }
       });
     } catch {
-      // Selector may not be valid in all contexts — skip silently
+      // Ignored
     }
   }
 }
 
 function installMutationObserver(): void {
-  if (observer) {
-    observer.disconnect();
-  }
+  if (observer) observer.disconnect();
 
   observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.addedNodes.length > 0) {
-        removeOverlays();
+        scanAndRemoveAds();
       }
     }
   });
@@ -179,34 +305,37 @@ async function initialize(): Promise<void> {
       antiPopupMode = state.antiPopupMode;
     }
   } catch {
-    // Background may not be ready — use defaults
     isEnabled = true;
     antiPopupMode = 'balanced';
   }
 
   if (isEnabled) {
+    injectCosmeticStyles();
     installPopupBlocker(antiPopupMode);
     installMutationObserver();
-    // Run immediately on existing DOM
+    document.addEventListener('click', handleGlobalClick, true);
+
     if (document.readyState !== 'loading') {
-      removeOverlays();
+      scanAndRemoveAds();
     } else {
-      document.addEventListener('DOMContentLoaded', removeOverlays);
+      document.addEventListener('DOMContentLoaded', scanAndRemoveAds);
     }
   }
 
   isInitialized = true;
 }
 
-// ─── Message Listener (from background/popup) ─────────────────────────────────
+// ─── Message Listener ─────────────────────────────────────────────────────────
 
 browser.runtime.onMessage.addListener((message: Message) => {
   if (message.type === 'SET_ENABLED') {
     isEnabled = message.payload as boolean;
     if (isEnabled) {
+      injectCosmeticStyles();
       installPopupBlocker(antiPopupMode);
       installMutationObserver();
     } else {
+      removeCosmeticStyles();
       restoreWindowOpen();
       disconnectMutationObserver();
     }
