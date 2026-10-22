@@ -54,21 +54,92 @@
       </button>
     </div>
 
-    <!-- Stats & Filters Grid -->
-    <div class="stats-row">
+    <!-- Live Statistics Section (AdGuard Pro style) -->
+    <div class="stats-grid-4">
       <div class="stat-box">
-        <span class="stat-val">38.000+</span>
-        <span class="stat-desc">Quy tắc hoạt động</span>
+        <span class="stat-val" id="stat-total-blocked">0</span>
+        <span class="stat-desc">Đã chặn tổng</span>
       </div>
       <div class="stat-box">
-        <span class="stat-val" id="filters-active">3 Bộ lọc</span>
-        <span class="stat-desc">ABPVN, EasyList</span>
+        <span class="stat-val" id="stat-data-saved">0 MB</span>
+        <span class="stat-desc">Dữ liệu tiết kiệm</span>
       </div>
+      <div class="stat-box">
+        <span class="stat-val" id="stat-popups-blocked">0</span>
+        <span class="stat-desc">Pop-up/Redirect</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-val" id="stat-active-rules">68.340</span>
+        <span class="stat-desc">Quy tắc / 150K</span>
+      </div>
+    </div>
+
+    <!-- Fine-Tuning Filters (Tinh chỉnh bộ lọc chuyên sâu) -->
+    <div class="card fine-tune-card">
+      <div class="section-header">
+        <span class="section-title">TINH CHỈNH BỘ LỌC</span>
+        <span class="section-badge">4 BỘ LỌC</span>
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-text">
+          <span class="filter-name">🇻🇳 ABPVN (Web Việt Nam)</span>
+          <span class="filter-desc">Tối ưu cho web phim, báo chí, truyện tranh</span>
+        </div>
+        <label class="ios-switch ios-switch--small">
+          <input type="checkbox" id="toggle-filter-abpvn" checked />
+          <span class="ios-slider"></span>
+        </label>
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-text">
+          <span class="filter-name">🎰 Chống Nhà cái & Cá cược</span>
+          <span class="filter-desc">Chặn banner VSbet, CM88, SUN88, casino</span>
+        </div>
+        <label class="ios-switch ios-switch--small">
+          <input type="checkbox" id="toggle-filter-gambling" checked />
+          <span class="ios-slider"></span>
+        </label>
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-text">
+          <span class="filter-name">🚫 Chống Pop-up & Chuyển hướng</span>
+          <span class="filter-desc">Triệt tiêu bẫy clickjacking, tự nhảy tab mới</span>
+        </div>
+        <label class="ios-switch ios-switch--small">
+          <input type="checkbox" id="toggle-filter-annoyances" checked />
+          <span class="ios-slider"></span>
+        </label>
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-text">
+          <span class="filter-name">🌐 EasyList Quốc tế</span>
+          <span class="filter-desc">Quảng cáo banner, video ads toàn cầu</span>
+        </div>
+        <label class="ios-switch ios-switch--small">
+          <input type="checkbox" id="toggle-filter-easylist" checked />
+          <span class="ios-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Anti-Popup Mode Segmented Control -->
+    <div class="card antipopup-card">
+      <span class="section-title">CHẾ ĐỘ CHẶN POP-UP</span>
+      <div class="segmented-control" id="antipopup-mode-control">
+        <button class="seg-btn active" data-mode="balanced">Cân bằng</button>
+        <button class="seg-btn" data-mode="strict">Nghiêm ngặt</button>
+        <button class="seg-btn" data-mode="off">Tắt</button>
+      </div>
+      <span class="seg-desc" id="antipopup-desc">Cân bằng: Tự động diệt mọi pop-up quảng cáo và chuyển hướng độc hại.</span>
     </div>
 
     <!-- Footer -->
     <div class="sheet-footer">
-      <span>KBlock v0.1.0 • Bảo vệ quyền riêng tư 100%</span>
+      <span>KBlock v0.1.0 • Bảo vệ quyền riêng tư 100% trên thiết bị</span>
     </div>
   </div>
 

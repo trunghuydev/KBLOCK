@@ -8,9 +8,10 @@
  * Runs at document_start on all pages and iframes.
  *
  * Responsibilities:
- * 1. Powerful Cosmetic Filter: Hides general ad networks and Vietnamese movie/betting ads (VSbet, CM88, SUN88, etc.)
- * 2. Smart Link & Banner Sweeper: Detects and removes gambling/betting links and image banners
- * 3. Popunder & Clickjacking Blocker: Completely prevents forced new tabs/windows
+ * 1. Synchronously injects Main World protection script into the webpage
+ * 2. Injects powerful cosmetic stylesheet hiding Vietnamese movie & betting ads
+ * 3. Dynamic DOM sweeping (cleans floating banners, catfish ads, clickjack overlays)
+ * 4. Communicates blocked events to background worker for live statistics
  */
 
 import type { Message, MessageResponse, AntiPopupMode } from '../shared/types';
@@ -20,7 +21,22 @@ let antiPopupMode: AntiPopupMode = 'balanced';
 let isInitialized = false;
 
 function sendMessage(message: Message): Promise<MessageResponse> {
-  return browser.runtime.sendMessage(message) as Promise<MessageResponse>;
+  try {
+    return browser.runtime.sendMessage(message) as Promise<MessageResponse>;
+  } catch {
+    return Promise.resolve({ success: false });
+  }
+}
+
+// ─── 0. Main World Script Injection ──────────────────────────────────────────
+
+function injectMainWorldProtection(): void {
+  // Inject inline script tag into DOM at document_start
+  const script = document.createElement('script');
+  script.src = browser.runtime.getURL('content/injected.js');
+  script.async = false;
+  (document.head || document.documentElement).appendChild(script);
+  script.onload = () => script.remove();
 }
 
 // ─── 1. Cosmetic CSS Injection ────────────────────────────────────────────────
@@ -29,7 +45,8 @@ const BETTING_DOMAINS = [
   'bet', '88', 'casino', 'kubet', 'thabet', 'sunwin', 'b52', 'go88',
   'bk8', 'fun88', 'w88', '12bet', 'm88', 'fb88', 'dafabet', 'k8',
   'jun88', '789bet', 'new88', 'hi88', 'shbet', 'f8bet', 'nohu',
-  'gamebai', 'banca', 'taixiu', 'keonhacai', 'bong88', 'vsbet', 'cm88', 'sun88'
+  'gamebai', 'banca', 'taixiu', 'keonhacai', 'bong88', 'vsbet', 'cm88', 'sun88',
+  'gem88', 'sin88', 'okvip', 'i9bet', 'ee88', 'f88', '79king'
 ];
 
 const AD_SELECTORS = [
@@ -50,27 +67,33 @@ const AD_SELECTORS = [
   '[class*="eclick"]', '[id*="eclick"]',
   '[class*="ambient"]', '[class*="novanet"]', '[class*="adtima"]',
 
-  // Common Movie & Streaming Site Ad Containers (Motchill, Phimmoi, Bilutv, etc.)
-  '[class*="banner-top"]', '[class*="top-banner"]',
-  '[class*="banner-ads"]', '[class*="ad-banner"]',
-  '[id*="banner-ads"]', '[id*="ad-banner"]',
-  '[class*="banner_top"]', '[class*="top_banner"]',
-  '[class*="banner_header"]', '[class*="header_banner"]',
-  '[class*="banner-header"]', '[class*="header-banner"]',
-  '[class*="floating-banner"]', '[class*="catfish-banner"]',
-  '[class*="sticky-banner"]', '[class*="qc-"]', '[id*="qc-"]',
+  // Movie & Streaming Site Ad Containers (Motchill, Phimmoi, Bilutv, Dongphim, etc.)
+  '#div_ad_top', '#ads_top', '#ads-preload', '#mobileCatfish', '#pmadv',
+  '.banner-top', '.top-banner', '.banner-ads', '.ad-banner', '.ad-top',
+  '#banner-ads', '#ad-banner', '.banner_top', '.top_banner', '.banner_header',
+  '.banner-header', '.floating-banner', '.catfish-banner', '.sticky-banner',
+  '.qc-bottom', '.qc-top', '.qc-left', '.qc-right', '.float-ck',
+  '[class*="qc-"]', '[id*="qc-"]',
   '[class*="quangcao"]', '[id*="quangcao"]',
   '[class*="quang-cao"]', '[id*="quang-cao"]',
-  '.advertisement', '.ads-holder', '.ad-box',
+  '.advertisement', '.ads-holder', '.ad-box', '.box-ads', '.ads-container',
+  '[class^="adHTML"]', '[id^="bn_bottom_fixed_"]', '.section-catfish',
 
-  // Betting & Gambling Links (covers VSbet, CM88, SUN88, etc.)
-  ...BETTING_DOMAINS.map(b => `a[href*="${b}"][target="_blank"]`),
-  ...BETTING_DOMAINS.map(b => `a[href*="${b}"] img`),
+  // Betting & Casino Image Banners & Links
+  ...BETTING_DOMAINS.map(b => `a[href*="${b}"]`),
+  ...BETTING_DOMAINS.map(b => `img[src*="${b}"]`),
   ...BETTING_DOMAINS.map(b => `[class*="${b}"] img`),
+  'img[src*="newchill"]',
+  'img[src*="banner"]',
+  'img[src*="tvc"]',
+  'img[src*="preroll"]',
 
   // Overlays & Clickjackers
   '[class*="popup-overlay"]', '[class*="ad-overlay"]', '[class*="ads-overlay"]',
-  '[id*="popup-overlay"]', '[id*="ad-popup"]'
+  '[id*="popup-overlay"]', '[id*="ad-popup"]',
+  'div[style*="z-index: 2147483647"]',
+  'div[style*="z-index: 999999"]',
+  'div[style*="z-index: 99999"]'
 ];
 
 const STYLE_ID = 'kblock-cosmetic-filters';
@@ -110,114 +133,57 @@ const BETTING_REGEX = new RegExp(BETTING_DOMAINS.join('|'), 'i');
 function cleanAdElements(): void {
   if (!isEnabled) return;
 
-  // 1. Sweep <a> tags with betting links
+  let cleaned = 0;
+
+  // 1. Sweep <a> and <img> tags with betting links or banners
   const links = document.querySelectorAll('a[href]');
   links.forEach((a) => {
     const href = (a.getAttribute('href') || '').toLowerCase();
     if (href && BETTING_REGEX.test(href)) {
-      // If the link contains images or banners, hide the parent container if it's solely an ad container
       const parent = a.parentElement;
       if (parent && parent !== document.body && parent !== document.documentElement) {
         const text = parent.innerText.trim();
-        // If parent has little text or is just an ad banner, remove it
-        if (text.length < 50 || /banner|qc|quangcao|ad/i.test(parent.className + ' ' + parent.id)) {
+        if (text.length < 80 || /banner|qc|quangcao|ad/i.test(parent.className + ' ' + parent.id)) {
           parent.style.setProperty('display', 'none', 'important');
         }
       }
       (a as HTMLElement).style.setProperty('display', 'none', 'important');
+      cleaned++;
     }
   });
 
-  // 2. Remove floating full-screen overlays with high z-index
+  // 2. Remove floating sticky bottom banners ("Tắt QC", Catfish ads)
+  const stickyFooters = document.querySelectorAll(
+    '[class*="catfish"], [class*="floating"], [id*="floating"], [class*="bottom-fixed"], [id*="bottom_fixed"]'
+  );
+  stickyFooters.forEach((el) => {
+    if (/qc|ad|banner|tắt qc/i.test(el.textContent || '') || /qc|ad|banner/i.test(el.className + ' ' + el.id)) {
+      (el as HTMLElement).style.setProperty('display', 'none', 'important');
+      cleaned++;
+    }
+  });
+
+  // 3. Remove floating full-screen overlays with high z-index
   const overlays = document.querySelectorAll('[class*="popup"], [class*="overlay"], [class*="modal"]');
   overlays.forEach((el) => {
     const style = window.getComputedStyle(el);
-    if ((style.position === 'fixed' || style.position === 'absolute') && parseInt(style.zIndex, 10) > 100) {
-      if (/ad|banner|qc|pop|promo/i.test(el.className + ' ' + el.id)) {
+    if ((style.position === 'fixed' || style.position === 'absolute') && parseInt(style.zIndex, 10) > 99) {
+      if (/ad|banner|qc|pop|promo/i.test(el.className + ' ' + el.id) || el.innerHTML.includes('img')) {
         el.remove();
+        cleaned++;
       }
     }
   });
-}
 
-// ─── 3. Anti-Popup & Popunder ─────────────────────────────────────────────────
-
-let originalWindowOpen: typeof window.open | null = null;
-
-function isSuspiciousPopup(url: string): boolean {
-  if (!url || url === 'about:blank' || url.startsWith('javascript:')) return true;
-  return BETTING_REGEX.test(url) || /popads|popcash|propeller|adsterra|monetag|click|track|aff/i.test(url);
-}
-
-function installPopupBlocker(mode: AntiPopupMode): void {
-  if (mode === 'off') {
-    if (originalWindowOpen) {
-      window.open = originalWindowOpen;
-      originalWindowOpen = null;
-    }
-    return;
-  }
-
-  if (!originalWindowOpen) {
-    originalWindowOpen = window.open.bind(window);
-  }
-
-  window.open = function blockedWindowOpen(
-    url?: string | URL,
-    target?: string,
-    features?: string,
-  ): Window | null {
-    const urlString = String(url ?? '');
-
-    if (mode === 'strict' || isSuspiciousPopup(urlString)) {
-      void sendMessage({
-        type: 'POPUP_DETECTED',
-        payload: { url: urlString },
-      }).catch(() => undefined);
-      console.warn('[KBlock] Blocked ad popup:', urlString);
-      return null;
-    }
-
-    return originalWindowOpen
-      ? originalWindowOpen(url as string, target, features)
-      : null;
-  };
-}
-
-// Intercept clickjacking on links that lead to betting/ad sites
-function handleDocumentClick(event: MouseEvent): void {
-  if (!isEnabled) return;
-
-  const target = event.target as HTMLElement | null;
-  if (!target) return;
-
-  const link = target.closest('a') as HTMLAnchorElement | null;
-  if (link && link.href) {
-    if (BETTING_REGEX.test(link.href)) {
-      event.preventDefault();
-      event.stopPropagation();
-      console.warn('[KBlock] Blocked click on betting link:', link.href);
-      return;
-    }
-  }
-
-  // Intercept full-screen clickjacking overlays
-  if (target !== document.body && target !== document.documentElement) {
-    const style = window.getComputedStyle(target);
-    const isFixedOrAbsolute = style.position === 'fixed' || style.position === 'absolute';
-    const isHighZIndex = parseInt(style.zIndex, 10) > 100;
-    const isFullCover = target.offsetWidth >= window.innerWidth * 0.9 && target.offsetHeight >= window.innerHeight * 0.9;
-
-    if (isFixedOrAbsolute && isHighZIndex && isFullCover && target.innerText.trim().length === 0) {
-      event.preventDefault();
-      event.stopPropagation();
-      target.remove();
-      console.warn('[KBlock] Removed full-screen clickjack overlay');
-    }
+  if (cleaned > 0) {
+    void sendMessage({
+      type: 'INCREMENT_STATS',
+      payload: { count: cleaned, category: 'ads' },
+    });
   }
 }
 
-// ─── 4. Dynamic MutationObserver ──────────────────────────────────────────────
+// ─── 3. Dynamic MutationObserver ──────────────────────────────────────────────
 
 let observer: MutationObserver | null = null;
 
@@ -234,10 +200,26 @@ function installMutationObserver(): void {
   });
 }
 
+// ─── 4. Blocked Event Listener from Main World ────────────────────────────────
+
+window.addEventListener('kblock-action-blocked', ((e: CustomEvent) => {
+  const detail = e.detail as { type: 'popup' | 'redirect' | 'clickjack'; url: string };
+  void sendMessage({
+    type: 'INCREMENT_STATS',
+    payload: {
+      count: 1,
+      category: detail.type === 'popup' || detail.type === 'redirect' ? 'popups' : 'ads',
+    },
+  });
+}) as EventListener);
+
 // ─── 5. Initialization ────────────────────────────────────────────────────────
 
 async function initialize(): Promise<void> {
   if (isInitialized) return;
+
+  // Always inject Main World protection right at document_start
+  injectMainWorldProtection();
 
   try {
     const response = await sendMessage({ type: 'GET_STATE' });
@@ -253,9 +235,7 @@ async function initialize(): Promise<void> {
 
   if (isEnabled) {
     injectCosmeticStyles();
-    installPopupBlocker(antiPopupMode);
     installMutationObserver();
-    document.addEventListener('click', handleDocumentClick, true);
 
     if (document.readyState !== 'loading') {
       cleanAdElements();
@@ -272,7 +252,6 @@ browser.runtime.onMessage.addListener((message: Message) => {
     isEnabled = message.payload as boolean;
     if (isEnabled) {
       injectCosmeticStyles();
-      installPopupBlocker(antiPopupMode);
       installMutationObserver();
       cleanAdElements();
     } else {
@@ -281,7 +260,6 @@ browser.runtime.onMessage.addListener((message: Message) => {
     }
   } else if (message.type === 'SET_ANTIPOPUP_MODE') {
     antiPopupMode = message.payload as AntiPopupMode;
-    installPopupBlocker(antiPopupMode);
   }
 });
 

@@ -40,9 +40,26 @@
         "id": "base_rules",
         "enabled": true,
         "path": "rules/base.json"
+      },
+      {
+        "id": "abpvn_rules",
+        "enabled": true,
+        "path": "rules/abpvn.json"
+      },
+      {
+        "id": "gambling_rules",
+        "enabled": true,
+        "path": "rules/gambling.json"
       }
     ]
   },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["content/injected.js"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ],
 
   "browser_specific_settings": {
     "safari": {

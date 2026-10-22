@@ -11,6 +11,7 @@ struct FilterItem: Identifiable {
     let ruleCount: Int
     let version: String
     let isRecommended: Bool
+    let bindingKeyPath: ReferenceWritableKeyPath<AppGroupManager, Bool>
 }
 
 struct FilterListsView: View {
@@ -19,33 +20,45 @@ struct FilterListsView: View {
     private let availableFilters: [FilterItem] = [
         FilterItem(
             id: "abpvn",
-            name: "ABPVN List",
-            description: "Bộ lọc tối ưu đặc biệt cho các trang web Việt Nam (báo chí, diễn đàn, phim ảnh)",
-            ruleCount: 14500,
+            name: "🇻🇳 ABPVN — Web Việt Nam",
+            description: "Bộ lọc tối ưu cho các trang web Việt Nam (phim ảnh, báo chí, truyện tranh, diễn đàn)",
+            ruleCount: 8420,
             version: "2026.10",
-            isRecommended: true
+            isRecommended: true,
+            bindingKeyPath: \.filterAbpvn
+        ),
+        FilterItem(
+            id: "gambling",
+            name: "🎰 Chống Nhà cái & Cá cược",
+            description: "Chặn sạch banner cá độ, casino, VSbet, CM88, SUN88, SUNWIN trên web phim lậu",
+            ruleCount: 5120,
+            version: "2026.10",
+            isRecommended: true,
+            bindingKeyPath: \.filterGambling
+        ),
+        FilterItem(
+            id: "annoyances",
+            name: "🚫 Chống Pop-up & Chuyển hướng",
+            description: "Triệt tiêu bẫy clickjacking, tự động nhảy tab mới và thông báo cookie phiền phức",
+            ruleCount: 6300,
+            version: "2026.10",
+            isRecommended: true,
+            bindingKeyPath: \.filterAnnoyances
         ),
         FilterItem(
             id: "easylist",
-            name: "EasyList Global",
-            description: "Bộ lọc quảng cáo quốc tế tiêu chuẩn",
-            ruleCount: 38200,
+            name: "🌐 EasyList Quốc Tế",
+            description: "Bộ lọc tiêu chuẩn chặn quảng cáo banner, video preroll và theo dõi toàn cầu",
+            ruleCount: 48500,
             version: "2026.10",
-            isRecommended: true
+            isRecommended: true,
+            bindingKeyPath: \.filterEasylist
         ),
-        FilterItem(
-            id: "adguard_mobile",
-            name: "AdGuard Mobile Filter",
-            description: "Bộ lọc tinh gọn dành cho thiết bị di động",
-            ruleCount: 11000,
-            version: "2026.10",
-            isRecommended: false
-        )
     ]
 
     var body: some View {
         List {
-            Section(header: Text("Bộ lọc đã cài đặt")) {
+            Section(header: Text("Bộ lọc hoạt động")) {
                 ForEach(availableFilters) { item in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
@@ -67,16 +80,8 @@ struct FilterListsView: View {
                             Spacer()
 
                             Toggle("", isOn: Binding(
-                                get: { state.activeFilterLists.contains(item.id) },
-                                set: { active in
-                                    if active {
-                                        if !state.activeFilterLists.contains(item.id) {
-                                            state.activeFilterLists.append(item.id)
-                                        }
-                                    } else {
-                                        state.activeFilterLists.removeAll { $0 == item.id }
-                                    }
-                                }
+                                get: { state[keyPath: item.bindingKeyPath] },
+                                set: { state[keyPath: item.bindingKeyPath] = $0 }
                             ))
                             .labelsHidden()
                         }
@@ -86,26 +91,37 @@ struct FilterListsView: View {
                             .foregroundColor(KBlockTheme.textSecondary)
 
                         HStack {
-                            Label("\(item.ruleCount) quy tắc", systemImage: "shield.lefthalf.filled")
+                            Label("\(item.ruleCount.formatted()) quy tắc", systemImage: "shield.lefthalf.filled")
                             Spacer()
                             Text("Bản: \(item.version)")
                         }
                         .font(.caption)
                         .foregroundColor(KBlockTheme.textSecondary)
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 6)
                 }
             }
 
-            Section(header: Text("Giới hạn DeclarativeNetRequest")) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Safari MV3 giới hạn tối đa ~50.000 quy tắc cho mỗi ruleset tĩnh.")
-                        .font(.footnote)
-                        .foregroundColor(KBlockTheme.textSecondary)
-                    Text("KBlock tự động tối ưu hóa và hợp nhất quy tắc để không vượt quá giới hạn này.")
+            Section(header: Text("Năng lực quy tắc Safari (Apple iOS 15+)")) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Tổng quy tắc kích hoạt:")
+                            .font(.subheadline)
+                            .foregroundColor(KBlockTheme.textPrimary)
+                        Spacer()
+                        Text("\(state.totalActiveRules.formatted()) / 150.000")
+                            .font(.subheadline.bold())
+                            .foregroundColor(KBlockTheme.primary)
+                    }
+
+                    ProgressView(value: Double(state.totalActiveRules), total: 150000)
+                        .accentColor(KBlockTheme.primary)
+
+                    Text("Apple đã nâng giới hạn Safari lên 150.000 quy tắc. KBlock sử dụng ~68.300 quy tắc, hoàn toàn mượt mà và tối ưu hiệu năng thiết bị.")
                         .font(.footnote)
                         .foregroundColor(KBlockTheme.textSecondary)
                 }
+                .padding(.vertical, 4)
             }
         }
         .navigationTitle("Bộ lọc quảng cáo")

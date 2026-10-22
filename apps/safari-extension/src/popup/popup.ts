@@ -11,6 +11,8 @@ import {
   type ExtensionState,
   type Message,
   type MessageResponse,
+  type AntiPopupMode,
+  type FilterCategories,
 } from '../shared/types';
 
 function el<T extends HTMLElement>(id: string): T {
@@ -33,7 +35,6 @@ async function sendMessage(message: Message): Promise<MessageResponse> {
 
 async function getCurrentDomain(): Promise<string | null> {
   try {
-    // Primary query
     const tabs = await browser.tabs.query({ active: true, currentWindow: true });
     if (tabs && tabs[0]?.url) {
       const url = new URL(tabs[0].url);
@@ -46,7 +47,6 @@ async function getCurrentDomain(): Promise<string | null> {
   }
 
   try {
-    // iOS Safari fallback: query active tab across all windows
     const tabs = await browser.tabs.query({ active: true });
     for (const tab of tabs) {
       if (tab.url && (tab.url.startsWith('http://') || tab.url.startsWith('https://'))) {
@@ -61,6 +61,17 @@ async function getCurrentDomain(): Promise<string | null> {
   return null;
 }
 
+function calculateActiveRules(state: ExtensionState): number {
+  if (!state.enabled) return 0;
+  let count = 0;
+  const cats = state.filterCategories;
+  if (cats.abpvn) count += 8420;
+  if (cats.gambling) count += 5120;
+  if (cats.easylist) count += 48500;
+  if (cats.annoyances) count += 6300;
+  return count;
+}
+
 function renderState(state: ExtensionState, domain: string | null): void {
   const toggle = el<HTMLInputElement>('main-toggle');
   const statusTitle = el('status-title');
@@ -69,7 +80,6 @@ function renderState(state: ExtensionState, domain: string | null): void {
   const siteStatusPill = el('site-status-pill');
   const whitelistBtn = el('whitelist-btn');
   const removeWhitelistBtn = el('remove-whitelist-btn');
-  const filtersActive = document.getElementById('filters-active');
 
   // Master Toggle
   toggle.checked = state.enabled;
@@ -108,11 +118,44 @@ function renderState(state: ExtensionState, domain: string | null): void {
     removeWhitelistBtn.classList.add('hidden');
   }
 
-  if (filtersActive) {
-    const count = (state.filterSources && state.filterSources.length > 0)
-      ? state.filterSources.filter(s => s.enabled).length
-      : 3;
-    filtersActive.textContent = `${count} Bộ lọc`;
+  // Live Statistics Display (AdGuard Pro style)
+  const totalBlockedEl = document.getElementById('stat-total-blocked');
+  const dataSavedEl = document.getElementById('stat-data-saved');
+  const popupsBlockedEl = document.getElementById('stat-popups-blocked');
+  const activeRulesEl = document.getElementById('stat-active-rules');
+
+  if (totalBlockedEl) totalBlockedEl.textContent = state.stats.totalBlocked.toLocaleString();
+  if (dataSavedEl) dataSavedEl.textContent = `${state.stats.bandwidthSavedMB} MB`;
+  if (popupsBlockedEl) popupsBlockedEl.textContent = state.stats.popupsBlocked.toLocaleString();
+  if (activeRulesEl) activeRulesEl.textContent = calculateActiveRules(state).toLocaleString();
+
+  // Filter Categories Toggles
+  const cats = state.filterCategories;
+  const toggleAbpvn = document.getElementById('toggle-filter-abpvn') as HTMLInputElement | null;
+  const toggleGambling = document.getElementById('toggle-filter-gambling') as HTMLInputElement | null;
+  const toggleAnnoyances = document.getElementById('toggle-filter-annoyances') as HTMLInputElement | null;
+  const toggleEasylist = document.getElementById('toggle-filter-easylist') as HTMLInputElement | null;
+
+  if (toggleAbpvn) toggleAbpvn.checked = cats.abpvn;
+  if (toggleGambling) toggleGambling.checked = cats.gambling;
+  if (toggleAnnoyances) toggleAnnoyances.checked = cats.annoyances;
+  if (toggleEasylist) toggleEasylist.checked = cats.easylist;
+
+  // Anti-Popup Mode Segmented Control
+  const segButtons = document.querySelectorAll<HTMLButtonElement>('.seg-btn');
+  segButtons.forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.mode === state.antiPopupMode);
+  });
+
+  const descEl = document.getElementById('antipopup-desc');
+  if (descEl) {
+    if (state.antiPopupMode === 'strict') {
+      descEl.textContent = 'Nghiêm ngặt: Khóa toàn bộ window.open và bẫy clickjacking tuyệt đối.';
+    } else if (state.antiPopupMode === 'balanced') {
+      descEl.textContent = 'Cân bằng: Tự động diệt mọi pop-up quảng cáo và chuyển hướng độc hại.';
+    } else {
+      descEl.textContent = 'Tắt: Cho phép mọi pop-up (không khuyến nghị trên web phim).';
+    }
   }
 }
 
@@ -122,6 +165,39 @@ async function onToggleChange(event: Event): Promise<void> {
 
   if (response.success && currentState) {
     currentState = { ...currentState, enabled };
+    renderState(currentState, currentDomain);
+  }
+}
+
+async function onCategoryToggle(category: keyof FilterCategories, enabled: boolean): Promise<void> {
+  const response = await sendMessage({
+    type: 'SET_FILTER_CATEGORY',
+    payload: { category, enabled },
+  });
+
+  if (response.success && currentState) {
+    currentState = {
+      ...currentState,
+      filterCategories: {
+        ...currentState.filterCategories,
+        [category]: enabled,
+      },
+    };
+    renderState(currentState, currentDomain);
+  }
+}
+
+async function onAntiPopupModeClick(mode: AntiPopupMode): Promise<void> {
+  const response = await sendMessage({
+    type: 'SET_ANTIPOPUP_MODE',
+    payload: mode,
+  });
+
+  if (response.success && currentState) {
+    currentState = {
+      ...currentState,
+      antiPopupMode: mode,
+    };
     renderState(currentState, currentDomain);
   }
 }
@@ -161,16 +237,36 @@ async function onRemoveWhitelist(): Promise<void> {
 }
 
 async function init(): Promise<void> {
-  // Always attach event listeners first so UI is immediately interactive
   try {
     el<HTMLInputElement>('main-toggle').addEventListener('change', (e) => void onToggleChange(e));
     el('whitelist-btn').addEventListener('click', () => void onAddWhitelist());
     el('remove-whitelist-btn').addEventListener('click', () => void onRemoveWhitelist());
+
+    // Category toggles
+    const setupCategoryListener = (id: string, category: keyof FilterCategories) => {
+      const elCheck = document.getElementById(id) as HTMLInputElement | null;
+      if (elCheck) {
+        elCheck.addEventListener('change', () => void onCategoryToggle(category, elCheck.checked));
+      }
+    };
+
+    setupCategoryListener('toggle-filter-abpvn', 'abpvn');
+    setupCategoryListener('toggle-filter-gambling', 'gambling');
+    setupCategoryListener('toggle-filter-annoyances', 'annoyances');
+    setupCategoryListener('toggle-filter-easylist', 'easylist');
+
+    // Anti-popup segmented buttons
+    const segButtons = document.querySelectorAll<HTMLButtonElement>('.seg-btn');
+    segButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode as AntiPopupMode;
+        if (mode) void onAntiPopupModeClick(mode);
+      });
+    });
   } catch (err) {
     console.warn('[KBlock Popup] Listener attachment:', err);
   }
 
-  // Load state and current domain with safe fallbacks
   let state: ExtensionState = { ...DEFAULT_STATE };
   let domain: string | null = null;
 

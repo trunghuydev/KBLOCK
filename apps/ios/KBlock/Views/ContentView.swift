@@ -97,24 +97,42 @@ struct ContentView: View {
     }
 
     private var statsRow: some View {
-        HStack(spacing: 12) {
-            statBox(number: "38K+", title: "Quy tắc lọc")
-            statBox(number: "\(state.activeFilterLists.count)", title: "Bộ lọc bật")
-            statBox(number: "\(state.whitelist.count)", title: "Trang bỏ qua")
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                statBox(number: "\(state.blockedCount.formatted())", title: "Tổng đã chặn", icon: "shield.fill")
+                statBox(number: "\(String(format: "%.1f", state.bandwidthSavedMB)) MB", title: "Dữ liệu tiết kiệm", icon: "arrow.down.circle.fill")
+            }
+            HStack(spacing: 10) {
+                statBox(number: "\(state.popupsBlocked.formatted())", title: "Pop-up/Redirect diệt", icon: "xmark.circle.fill")
+                statBox(number: "\(state.totalActiveRules.formatted()) / 150K", title: "Quy tắc hoạt động", icon: "checklist")
+            }
         }
     }
 
-    private func statBox(number: String, title: String) -> some View {
-        VStack(spacing: 4) {
-            Text(number)
-                .font(.system(size: 19, weight: .bold, design: .rounded))
-                .foregroundColor(KBlockTheme.primary)
-            Text(title)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(KBlockTheme.textSecondary)
+    private func statBox(number: String, title: String, icon: String) -> some View {
+        HStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(KBlockTheme.primary.opacity(0.1))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(KBlockTheme.primary)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(number)
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(KBlockTheme.primary)
+                Text(title)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(KBlockTheme.textSecondary)
+            }
+            Spacer()
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
         .background(KBlockTheme.surface)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 3)
@@ -158,7 +176,7 @@ struct ContentView: View {
     private var navigationSection: some View {
         VStack(spacing: 12) {
             NavigationLink(destination: FilterListsView()) {
-                menuRow(icon: "list.bullet.rectangle.portrait.fill", title: "Bộ lọc quảng cáo", subtitle: "\(state.activeFilterLists.count) nguồn bộ lọc đang hoạt động")
+                menuRow(icon: "list.bullet.rectangle.portrait.fill", title: "Bộ lọc quảng cáo", subtitle: "\(state.totalActiveRules.formatted()) quy tắc đang hoạt động")
             }
 
             NavigationLink(destination: WhitelistView()) {

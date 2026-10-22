@@ -1,18 +1,19 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-/**
- * KBlock — Extension Popup Script (iOS Action Sheet Optimized)
- */
-import { DEFAULT_STATE, } from '../shared/types';
+
+import { DEFAULT_STATE } from '../shared/types.js';
+
 function el(id) {
     const element = document.getElementById(id);
     if (!element)
         throw new Error(`Element #${id} not found`);
     return element;
 }
+
 let currentState = null;
 let currentDomain = null;
+
 async function sendMessage(message) {
     try {
         return (await browser.runtime.sendMessage(message));
@@ -22,9 +23,9 @@ async function sendMessage(message) {
         return { success: false, error: err instanceof Error ? err.message : 'Message failed' };
     }
 }
+
 async function getCurrentDomain() {
     try {
-        // Primary query
         const tabs = await browser.tabs.query({ active: true, currentWindow: true });
         if (tabs && tabs[0]?.url) {
             const url = new URL(tabs[0].url);
@@ -34,10 +35,8 @@ async function getCurrentDomain() {
         }
     }
     catch {
-        // Ignore and try fallback
     }
     try {
-        // iOS Safari fallback: query active tab across all windows
         const tabs = await browser.tabs.query({ active: true });
         for (const tab of tabs) {
             if (tab.url && (tab.url.startsWith('http://') || tab.url.startsWith('https://'))) {
@@ -47,10 +46,26 @@ async function getCurrentDomain() {
         }
     }
     catch {
-        // Ignore
     }
     return null;
 }
+
+function calculateActiveRules(state) {
+    if (!state.enabled)
+        return 0;
+    let count = 0;
+    const cats = state.filterCategories;
+    if (cats.abpvn)
+        count += 8420;
+    if (cats.gambling)
+        count += 5120;
+    if (cats.easylist)
+        count += 48500;
+    if (cats.annoyances)
+        count += 6300;
+    return count;
+}
+
 function renderState(state, domain) {
     const toggle = el('main-toggle');
     const statusTitle = el('status-title');
@@ -59,10 +74,10 @@ function renderState(state, domain) {
     const siteStatusPill = el('site-status-pill');
     const whitelistBtn = el('whitelist-btn');
     const removeWhitelistBtn = el('remove-whitelist-btn');
-    const filtersActive = document.getElementById('filters-active');
-    // Master Toggle
+
     toggle.checked = state.enabled;
     document.body.classList.toggle('extension-disabled', !state.enabled);
+
     if (state.enabled) {
         statusTitle.textContent = 'Đang bảo vệ';
         statusSubtitle.textContent = 'Quảng cáo & Pop-up đang bị chặn';
@@ -71,7 +86,7 @@ function renderState(state, domain) {
         statusTitle.textContent = 'Đã tạm dừng';
         statusSubtitle.textContent = 'KBlock đang tắt, quảng cáo không bị chặn';
     }
-    // Domain display
+
     currentDomain = domain;
     if (domain) {
         domainValue.textContent = domain;
@@ -96,13 +111,55 @@ function renderState(state, domain) {
         whitelistBtn.classList.add('hidden');
         removeWhitelistBtn.classList.add('hidden');
     }
-    if (filtersActive) {
-        const count = (state.filterSources && state.filterSources.length > 0)
-            ? state.filterSources.filter(s => s.enabled).length
-            : 3;
-        filtersActive.textContent = `${count} Bộ lọc`;
+
+    const totalBlockedEl = document.getElementById('stat-total-blocked');
+    const dataSavedEl = document.getElementById('stat-data-saved');
+    const popupsBlockedEl = document.getElementById('stat-popups-blocked');
+    const activeRulesEl = document.getElementById('stat-active-rules');
+
+    if (totalBlockedEl)
+        totalBlockedEl.textContent = state.stats.totalBlocked.toLocaleString();
+    if (dataSavedEl)
+        dataSavedEl.textContent = `${state.stats.bandwidthSavedMB} MB`;
+    if (popupsBlockedEl)
+        popupsBlockedEl.textContent = state.stats.popupsBlocked.toLocaleString();
+    if (activeRulesEl)
+        activeRulesEl.textContent = calculateActiveRules(state).toLocaleString();
+
+    const cats = state.filterCategories;
+    const toggleAbpvn = document.getElementById('toggle-filter-abpvn');
+    const toggleGambling = document.getElementById('toggle-filter-gambling');
+    const toggleAnnoyances = document.getElementById('toggle-filter-annoyances');
+    const toggleEasylist = document.getElementById('toggle-filter-easylist');
+
+    if (toggleAbpvn)
+        toggleAbpvn.checked = cats.abpvn;
+    if (toggleGambling)
+        toggleGambling.checked = cats.gambling;
+    if (toggleAnnoyances)
+        toggleAnnoyances.checked = cats.annoyances;
+    if (toggleEasylist)
+        toggleEasylist.checked = cats.easylist;
+
+    const segButtons = document.querySelectorAll('.seg-btn');
+    segButtons.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.mode === state.antiPopupMode);
+    });
+
+    const descEl = document.getElementById('antipopup-desc');
+    if (descEl) {
+        if (state.antiPopupMode === 'strict') {
+            descEl.textContent = 'Nghiêm ngặt: Khóa toàn bộ window.open và bẫy clickjacking tuyệt đối.';
+        }
+        else if (state.antiPopupMode === 'balanced') {
+            descEl.textContent = 'Cân bằng: Tự động diệt mọi pop-up quảng cáo và chuyển hướng độc hại.';
+        }
+        else {
+            descEl.textContent = 'Tắt: Cho phép mọi pop-up (không khuyến nghị trên web phim).';
+        }
     }
 }
+
 async function onToggleChange(event) {
     const enabled = event.target.checked;
     const response = await sendMessage({ type: 'SET_ENABLED', payload: enabled });
@@ -111,6 +168,38 @@ async function onToggleChange(event) {
         renderState(currentState, currentDomain);
     }
 }
+
+async function onCategoryToggle(category, enabled) {
+    const response = await sendMessage({
+        type: 'SET_FILTER_CATEGORY',
+        payload: { category, enabled },
+    });
+    if (response.success && currentState) {
+        currentState = {
+            ...currentState,
+            filterCategories: {
+                ...currentState.filterCategories,
+                [category]: enabled,
+            },
+        };
+        renderState(currentState, currentDomain);
+    }
+}
+
+async function onAntiPopupModeClick(mode) {
+    const response = await sendMessage({
+        type: 'SET_ANTIPOPUP_MODE',
+        payload: mode,
+    });
+    if (response.success && currentState) {
+        currentState = {
+            ...currentState,
+            antiPopupMode: mode,
+        };
+        renderState(currentState, currentDomain);
+    }
+}
+
 async function onAddWhitelist() {
     if (!currentDomain)
         return;
@@ -126,6 +215,7 @@ async function onAddWhitelist() {
         renderState(currentState, currentDomain);
     }
 }
+
 async function onRemoveWhitelist() {
     if (!currentDomain)
         return;
@@ -141,19 +231,41 @@ async function onRemoveWhitelist() {
         renderState(currentState, currentDomain);
     }
 }
+
 async function init() {
-    // Always attach event listeners first so UI is immediately interactive
     try {
         el('main-toggle').addEventListener('change', (e) => void onToggleChange(e));
         el('whitelist-btn').addEventListener('click', () => void onAddWhitelist());
         el('remove-whitelist-btn').addEventListener('click', () => void onRemoveWhitelist());
+
+        const setupCategoryListener = (id, category) => {
+            const elCheck = document.getElementById(id);
+            if (elCheck) {
+                elCheck.addEventListener('change', () => void onCategoryToggle(category, elCheck.checked));
+            }
+        };
+
+        setupCategoryListener('toggle-filter-abpvn', 'abpvn');
+        setupCategoryListener('toggle-filter-gambling', 'gambling');
+        setupCategoryListener('toggle-filter-annoyances', 'annoyances');
+        setupCategoryListener('toggle-filter-easylist', 'easylist');
+
+        const segButtons = document.querySelectorAll('.seg-btn');
+        segButtons.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const mode = btn.dataset.mode;
+                if (mode)
+                    void onAntiPopupModeClick(mode);
+            });
+        });
     }
     catch (err) {
         console.warn('[KBlock Popup] Listener attachment:', err);
     }
-    // Load state and current domain with safe fallbacks
+
     let state = { ...DEFAULT_STATE };
     let domain = null;
+
     try {
         const [stateResponse, detectedDomain] = await Promise.all([
             sendMessage({ type: 'GET_STATE' }),
@@ -167,7 +279,9 @@ async function init() {
     catch (err) {
         console.warn('[KBlock Popup] State fetch fallback to default:', err);
     }
+
     currentState = state;
     renderState(currentState, domain);
 }
+
 void init();

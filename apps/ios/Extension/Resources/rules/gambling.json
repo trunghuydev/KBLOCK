@@ -1,0 +1,227 @@
+[
+  {
+    "id": 2001,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*vsbet*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2002,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*cm88*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2003,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*sun88*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2004,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*sunwin*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2005,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*gem88*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2006,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*sin88*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2007,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*kubet*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2008,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*thabet*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2009,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*b52club*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2010,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*go88*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2011,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*jun88*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2012,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*789bet*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2013,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*new88*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2014,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*hi88*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2015,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*shbet*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2016,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*f8bet*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2017,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*okvip*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2018,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*i9bet*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2019,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*keonhacai*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2020,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*bong88*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2021,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*gamebai*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2022,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*taixiu*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2023,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*79king*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2024,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*ee88*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  },
+  {
+    "id": 2025,
+    "priority": 200,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*listnhacai*",
+      "resourceTypes": ["script", "image", "xmlhttprequest", "sub_frame", "media", "other"]
+    }
+  }
+]

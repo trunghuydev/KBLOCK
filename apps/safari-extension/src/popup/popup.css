@@ -270,21 +270,21 @@ body.extension-disabled .status-main {
   display: none !important;
 }
 
-/* ─── Stats Row ──────────────────────────────────────────────────────────── */
+/* ─── Stats Grid (4-box layout) ────────────────────────────────────────── */
 
-.stats-row {
+.stats-grid-4 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
 }
 
 .stat-box {
   background: var(--card-bg);
   border-radius: var(--radius-card);
-  padding: 12px 14px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
@@ -296,8 +296,119 @@ body.extension-disabled .status-main {
 }
 
 .stat-desc {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-sub);
+}
+
+/* ─── Fine Tuning & Category Cards ───────────────────────────────────────── */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-caption);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.section-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(16, 185, 129, 0.12);
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.filter-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.filter-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 8px;
+}
+
+.filter-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.filter-desc {
+  font-size: 11px;
+  color: var(--text-sub);
+}
+
+.ios-switch--small {
+  width: 44px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.ios-switch--small .ios-slider:before {
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+}
+
+.ios-switch--small input:checked + .ios-slider:before {
+  transform: translateX(18px);
+}
+
+/* ─── Segmented Control ──────────────────────────────────────────────────── */
+
+.segmented-control {
+  display: flex;
+  background: rgba(120, 120, 128, 0.12);
+  border-radius: 9px;
+  padding: 2px;
+  margin-top: 6px;
+  gap: 2px;
+}
+
+.seg-btn {
+  flex: 1;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.seg-btn.active {
+  background: var(--card-bg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: var(--primary);
+}
+
+.seg-desc {
+  font-size: 11px;
+  color: var(--text-sub);
+  margin-top: 6px;
+  display: block;
 }
 
 /* ─── Footer ─────────────────────────────────────────────────────────────── */

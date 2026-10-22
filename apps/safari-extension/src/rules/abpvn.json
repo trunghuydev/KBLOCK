@@ -1,0 +1,227 @@
+[
+  {
+    "id": 1001,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||ad.vidverto.io^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame"]
+    }
+  },
+  {
+    "id": 1002,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||adcenter.cx^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame"]
+    }
+  },
+  {
+    "id": 1003,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||adflex.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame", "image"]
+    }
+  },
+  {
+    "id": 1004,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||adpia.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame", "image"]
+    }
+  },
+  {
+    "id": 1005,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||adtima-static.zadn.vn^",
+      "resourceTypes": ["script", "xmlhttprequest"]
+    }
+  },
+  {
+    "id": 1006,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||adtima.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame", "image"]
+    }
+  },
+  {
+    "id": 1007,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||adtimaserver.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame"]
+    }
+  },
+  {
+    "id": 1008,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||ants.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame"]
+    }
+  },
+  {
+    "id": 1009,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||bidgear-syndication.com^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame"]
+    }
+  },
+  {
+    "id": 1010,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||blueseeddigital.com^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame"]
+    }
+  },
+  {
+    "id": 1011,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||delivery.yomedia.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame"]
+    }
+  },
+  {
+    "id": 1012,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||gammaplatform.com^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame"]
+    }
+  },
+  {
+    "id": 1013,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||media.yomedia.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "image"]
+    }
+  },
+  {
+    "id": 1014,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||static.dable.io^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame"]
+    }
+  },
+  {
+    "id": 1015,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||taboola.com^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame"]
+    }
+  },
+  {
+    "id": 1016,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||vads.net.vn^",
+      "resourceTypes": ["script", "xmlhttprequest", "sub_frame"]
+    }
+  },
+  {
+    "id": 1017,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*vast.js*",
+      "resourceTypes": ["script"]
+    }
+  },
+  {
+    "id": 1018,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*popunder*",
+      "resourceTypes": ["script", "sub_frame"]
+    }
+  },
+  {
+    "id": 1019,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*quangcao*",
+      "resourceTypes": ["script", "image", "sub_frame"]
+    }
+  },
+  {
+    "id": 1020,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*newchill*",
+      "resourceTypes": ["image", "script"]
+    }
+  },
+  {
+    "id": 1021,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||popads.net^",
+      "resourceTypes": ["script", "sub_frame"]
+    }
+  },
+  {
+    "id": 1022,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||popcash.net^",
+      "resourceTypes": ["script", "sub_frame"]
+    }
+  },
+  {
+    "id": 1023,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||propellerads.com^",
+      "resourceTypes": ["script", "sub_frame"]
+    }
+  },
+  {
+    "id": 1024,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||adsterra.com^",
+      "resourceTypes": ["script", "sub_frame"]
+    }
+  },
+  {
+    "id": 1025,
+    "priority": 150,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||monetag.com^",
+      "resourceTypes": ["script", "sub_frame"]
+    }
+  }
+]
