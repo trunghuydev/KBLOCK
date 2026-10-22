@@ -1,0 +1,26 @@
+[Adblock Plus 2.0]
+! Title: EasyList Sample for KBlock Tests
+! Version: 2026102201
+! Last modified: 22 Oct 2026
+! Homepage: https://easylist.to/
+! Licence: https://creativecommons.org/licenses/by-sa/3.0/
+
+! ─── Network Block Rules ───
+||pagead2.googlesyndication.com^$third-party
+||adservice.google.com^$third-party
+||adnxs.com^$script,image
+||doubleclick.net^$important
+||tracking.example.vn^$domain=example.vn|sub.example.vn
+@@||allowed-cdn.example.com^$script
+
+! ─── Element Hide Rules ───
+##.google-ad-placeholder
+example.vn##div.ad-container
+##div[id^="ad-banner-"]
+@@||example.com^$generichide
+
+! ─── Unsupported Rules (should be skipped and reported, never corrupting DNR) ───
+||popup.example.com^$redirect=noopjs
+||badrule.example.com^$badfilter
+##+js(set, test, 1)
+example.vn##div:has(> a[href*="affiliate"])

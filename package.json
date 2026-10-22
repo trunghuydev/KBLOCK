@@ -1,0 +1,19 @@
+{
+  "name": "kblock-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "KBlock — Open Source iOS Safari Ad-Blocker Monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "check": "npm run build:check --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MPL-2.0"
+}

@@ -1,0 +1,28 @@
+{
+  "name": "kblock-safari-extension",
+  "version": "0.1.0",
+  "description": "KBlock Safari Web Extension — ad blocker for Safari on iOS",
+  "private": true,
+  "scripts": {
+    "build": "tsc --noEmit false --outDir dist && node scripts/copy-assets.mjs",
+    "build:check": "tsc --noEmit",
+    "watch": "tsc --watch --noEmit false --outDir dist",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.{ts,json,html,css}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,json,html,css}\""
+  },
+  "devDependencies": {
+    "@types/chrome": "*",
+    "@types/firefox-webext-browser": "^143.0.1",
+    "@typescript-eslint/eslint-plugin": "*",
+    "@typescript-eslint/parser": "*",
+    "eslint": "*",
+    "prettier": "*",
+    "typescript": "~5.8.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MPL-2.0"
+}

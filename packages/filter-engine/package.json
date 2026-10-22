@@ -1,0 +1,30 @@
+{
+  "name": "@kblock/filter-engine",
+  "version": "0.1.0",
+  "description": "KBlock filter engine — EasyList parser and DNR converter",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit false",
+    "build:check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\""
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@typescript-eslint/eslint-plugin": "*",
+    "@typescript-eslint/parser": "*",
+    "eslint": "*",
+    "prettier": "*",
+    "typescript": "~5.8.3",
+    "vitest": "*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MPL-2.0"
+}
