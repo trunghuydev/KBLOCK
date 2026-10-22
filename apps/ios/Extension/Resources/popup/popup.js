@@ -1,34 +1,46 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-// ─── DOM Helpers ──────────────────────────────────────────────────────────────
 function el(id) {
     const element = document.getElementById(id);
     if (!element)
         throw new Error(`Element #${id} not found`);
     return element;
 }
-// ─── State ────────────────────────────────────────────────────────────────────
 let currentState = null;
 let currentDomain = null;
-// ─── Communication ────────────────────────────────────────────────────────────
 async function sendMessage(message) {
     return browser.runtime.sendMessage(message);
 }
 async function getCurrentDomain() {
     try {
+        // Primary query
         const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-        const tab = tabs[0];
-        if (!tab?.url)
-            return null;
-        const url = new URL(tab.url);
-        return url.hostname;
+        if (tabs && tabs[0]?.url) {
+            const url = new URL(tabs[0].url);
+            if (url.protocol === 'http:' || url.protocol === 'https:') {
+                return url.hostname;
+            }
+        }
     }
     catch {
-        return null;
+        // Ignore and try fallback
     }
+    try {
+        // iOS Safari fallback: query active tab across all windows
+        const tabs = await browser.tabs.query({ active: true });
+        for (const tab of tabs) {
+            if (tab.url && (tab.url.startsWith('http://') || tab.url.startsWith('https://'))) {
+                const url = new URL(tab.url);
+                return url.hostname;
+            }
+        }
+    }
+    catch {
+        // Ignore
+    }
+    return null;
 }
-// ─── Rendering ────────────────────────────────────────────────────────────────
 function renderState(state, domain) {
     const toggle = el('main-toggle');
     const statusTitle = el('status-title');
@@ -37,64 +49,50 @@ function renderState(state, domain) {
     const siteStatusPill = el('site-status-pill');
     const whitelistBtn = el('whitelist-btn');
     const removeWhitelistBtn = el('remove-whitelist-btn');
-    const filterList = el('filter-list');
-    // Toggle state
+    const filtersActive = document.getElementById('filters-active');
+    // Master Toggle
     toggle.checked = state.enabled;
     document.body.classList.toggle('extension-disabled', !state.enabled);
-    // Status
     if (state.enabled) {
-        statusTitle.textContent = 'Đang kích hoạt';
-        statusSubtitle.textContent = 'Đã lọc quảng cáo & chặn cửa sổ bật lên';
+        statusTitle.textContent = 'Đang bảo vệ';
+        statusSubtitle.textContent = 'Quảng cáo & Pop-up đang bị chặn';
     }
     else {
         statusTitle.textContent = 'Đã tạm dừng';
         statusSubtitle.textContent = 'KBlock đang tắt, quảng cáo không bị chặn';
     }
-    // Domain
+    // Domain display
     currentDomain = domain;
     if (domain) {
         domainValue.textContent = domain;
         const isWhitelisted = state.whitelist.includes(domain);
         if (isWhitelisted) {
             siteStatusPill.textContent = 'Đã tắt trên trang này';
-            siteStatusPill.className = 'site-status-pill whitelisted';
+            siteStatusPill.className = 'badge whitelisted';
             whitelistBtn.classList.add('hidden');
             removeWhitelistBtn.classList.remove('hidden');
         }
         else {
-            siteStatusPill.textContent = state.enabled ? 'Đang chặn' : 'Tạm dừng';
-            siteStatusPill.className = 'site-status-pill';
+            siteStatusPill.textContent = state.enabled ? 'Đang lọc' : 'Tạm dừng';
+            siteStatusPill.className = 'badge';
             whitelistBtn.classList.remove('hidden');
             removeWhitelistBtn.classList.add('hidden');
         }
     }
     else {
-        domainValue.textContent = 'Không có trang web';
-        siteStatusPill.textContent = '—';
+        domainValue.textContent = 'Trang web hiện tại';
+        siteStatusPill.textContent = state.enabled ? 'Đang lọc' : 'Tạm dừng';
+        siteStatusPill.className = 'badge';
         whitelistBtn.classList.add('hidden');
         removeWhitelistBtn.classList.add('hidden');
     }
-    // Filter list pills
-    filterList.innerHTML = '';
-    if (!state.filterSources || state.filterSources.length === 0) {
-        const defaultFilters = ['ABPVN (Việt Nam)', 'EasyList Global', 'Smart Anti-Popup'];
-        defaultFilters.forEach((name) => {
-            const li = document.createElement('li');
-            li.className = 'filter-pill active';
-            li.textContent = name;
-            filterList.appendChild(li);
-        });
-    }
-    else {
-        state.filterSources.forEach((source) => {
-            const li = document.createElement('li');
-            li.className = `filter-pill ${source.enabled ? 'active' : ''}`;
-            li.textContent = source.name;
-            filterList.appendChild(li);
-        });
+    if (filtersActive) {
+        const count = (state.filterSources && state.filterSources.length > 0)
+            ? state.filterSources.filter(s => s.enabled).length
+            : 3;
+        filtersActive.textContent = `${count} Bộ lọc`;
     }
 }
-// ─── Event Handlers ───────────────────────────────────────────────────────────
 async function onToggleChange(event) {
     const enabled = event.target.checked;
     const response = await sendMessage({ type: 'SET_ENABLED', payload: enabled });
@@ -133,7 +131,6 @@ async function onRemoveWhitelist() {
         renderState(currentState, currentDomain);
     }
 }
-// ─── Entry Point ──────────────────────────────────────────────────────────────
 async function init() {
     try {
         const [stateResponse, domain] = await Promise.all([
@@ -149,7 +146,7 @@ async function init() {
         el('remove-whitelist-btn').addEventListener('click', () => void onRemoveWhitelist());
     }
     catch (err) {
-        console.error('[KBlock Popup] Init failed:', err);
+        console.error('[KBlock Popup] Init error:', err);
     }
 }
 void init();

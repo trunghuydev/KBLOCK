@@ -7,107 +7,69 @@
   <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
-  <div id="app" class="kblock-container">
-    <!-- Header bar -->
-    <header class="kblock-header">
-      <div class="brand">
-        <div class="brand-icon-box">
-          <svg class="brand-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-        </div>
-        <div class="brand-info">
-          <span class="brand-title">KBlock</span>
-          <span class="brand-badge" id="live-badge">BẢO VỆ</span>
-        </div>
-      </div>
-
-      <label class="ios-switch" id="toggle-label" title="Bật/Tắt chặn toàn bộ">
-        <input type="checkbox" id="main-toggle" checked />
-        <span class="ios-slider"></span>
-      </label>
-    </header>
-
-    <!-- Hero Card -->
-    <section class="hero-card" id="status-card">
-      <div class="hero-glow" id="hero-glow"></div>
-      <div class="shield-halo">
-        <div class="shield-circle" id="shield-circle">
-          <svg class="shield-svg" viewBox="0 0 24 24" fill="currentColor">
+  <div id="app" class="ios-sheet-container">
+    <!-- Master Toggle & Status Card -->
+    <div class="status-banner" id="status-card">
+      <div class="status-left">
+        <div class="status-icon-wrap" id="status-icon-wrap">
+          <svg class="status-svg" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1 14.5l-4-4 1.41-1.41L11 13.67l6.59-6.59L19 8.5l-8 8z"/>
           </svg>
         </div>
-      </div>
-      <div class="hero-status">
-        <h2 class="status-heading" id="status-title">Đang kích hoạt</h2>
-        <p class="status-desc" id="status-subtitle">Đã lọc quảng cáo & chặn cửa sổ bật lên</p>
-      </div>
-    </section>
-
-    <!-- Current Site Section -->
-    <section class="site-card">
-      <div class="site-card-header">
-        <div class="site-meta">
-          <div class="globe-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="2" y1="12" x2="22" y2="12"/>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
-          </div>
-          <div class="domain-text">
-            <span class="domain-label">Trang web này</span>
-            <span class="domain-name" id="current-domain">Đang phát hiện...</span>
-          </div>
+        <div class="status-info">
+          <span class="status-main" id="status-title">Đang bảo vệ</span>
+          <span class="status-sub" id="status-subtitle">Quảng cáo & Pop-up đang bị chặn</span>
         </div>
-        <span class="site-status-pill" id="site-status-pill">Đang chặn</span>
       </div>
 
-      <div class="site-action-row">
-        <button class="action-btn action-btn--whitelist" id="whitelist-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          Tắt chặn trên trang này
-        </button>
-        <button class="action-btn action-btn--remove hidden" id="remove-whitelist-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          Bật lại chặn trên trang này
-        </button>
-      </div>
-    </section>
+      <label class="ios-switch" aria-label="Bật/Tắt chặn">
+        <input type="checkbox" id="main-toggle" checked />
+        <span class="ios-slider"></span>
+      </label>
+    </div>
 
-    <!-- Stats & Modes Grid -->
-    <section class="stats-grid">
-      <div class="stat-tile">
-        <span class="stat-number">38.000+</span>
-        <span class="stat-label">Quy tắc lọc</span>
+    <!-- Active Website Card -->
+    <div class="card website-card">
+      <div class="card-row">
+        <div class="site-info">
+          <span class="site-label">TRANG WEB HIỆN TẠI</span>
+          <span class="site-domain" id="current-domain">Đang xác định...</span>
+        </div>
+        <span class="badge" id="site-status-pill">Đang lọc</span>
       </div>
-      <div class="stat-tile">
-        <span class="stat-number" id="blocked-counter">0</span>
-        <span class="stat-label">Pop-up triệt tiêu</span>
-      </div>
-    </section>
 
-    <!-- Filter Lists summary -->
-    <section class="filters-card">
-      <div class="filters-card-header">
-        <span class="filters-title">Bộ lọc đang áp dụng</span>
-        <span class="filters-count">3 bộ lọc</span>
+      <button class="site-btn site-btn--pause" id="whitelist-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="6" y="4" width="4" height="16"/>
+          <rect x="14" y="4" width="4" height="16"/>
+        </svg>
+        Tắt chặn trên trang này
+      </button>
+
+      <button class="site-btn site-btn--resume hidden" id="remove-whitelist-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Bật lại chặn trên trang này
+      </button>
+    </div>
+
+    <!-- Stats & Filters Grid -->
+    <div class="stats-row">
+      <div class="stat-box">
+        <span class="stat-val">38.000+</span>
+        <span class="stat-desc">Quy tắc hoạt động</span>
       </div>
-      <ul class="filter-pills" id="filter-list">
-        <!-- Injected via popup.ts -->
-      </ul>
-    </section>
+      <div class="stat-box">
+        <span class="stat-val" id="filters-active">3 Bộ lọc</span>
+        <span class="stat-desc">ABPVN, EasyList</span>
+      </div>
+    </div>
 
     <!-- Footer -->
-    <footer class="kblock-footer">
-      <span class="footer-privacy">🛡️ 100% Cục bộ • Không lưu dữ liệu</span>
-      <span class="footer-version">v0.1.0</span>
-    </footer>
+    <div class="sheet-footer">
+      <span>KBlock v0.1.0 • Bảo vệ quyền riêng tư 100%</span>
+    </div>
   </div>
 
   <script type="module" src="popup.js"></script>
