@@ -18,6 +18,8 @@ targets:
     platform: iOS
     sources:
       - path: KBlock
+    info:
+      path: KBlock/Info.plist
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.kblock.KBlock
@@ -34,9 +36,12 @@ targets:
     platform: iOS
     sources:
       - path: Extension/SafariWebExtensionHandler.swift
+      - path: Extension/Info.plist
       - path: Extension/Resources
         type: folder
         buildPhase: resources
+    info:
+      path: Extension/Info.plist
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.kblock.KBlock.Extension
