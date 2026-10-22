@@ -1,0 +1,52 @@
+name: KBlock
+options:
+  bundleIdPrefix: dev.kblock
+  deploymentTarget:
+    iOS: "15.0"
+  xcodeVersion: "15.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+    TARGETED_DEVICE_FAMILY: "1,2" # iPhone, iPad
+    ENABLE_BITCODE: NO
+
+targets:
+  KBlock:
+    type: application
+    platform: iOS
+    sources:
+      - path: KBlock
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.kblock.KBlock
+        INFOPLIST_FILE: KBlock/Info.plist
+        CODE_SIGN_ENTITLEMENTS: KBlock/KBlock.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    dependencies:
+      - target: Extension
+
+  Extension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.kblock.KBlock.Extension
+        INFOPLIST_FILE: Extension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Extension/Extension.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+    preBuildScripts:
+      - name: "Copy Web Extension Assets"
+        script: |
+          set -e
+          DIST_DIR="${SRCROOT}/../safari-extension/dist"
+          DEST_DIR="${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}"
+          mkdir -p "${DEST_DIR}"
+          if [ -d "${DIST_DIR}" ]; then
+            cp -R "${DIST_DIR}/"* "${DEST_DIR}/"
+          else
+            echo "warning: ${DIST_DIR} not found. Run 'npm run build' in apps/safari-extension first."
+          fi
