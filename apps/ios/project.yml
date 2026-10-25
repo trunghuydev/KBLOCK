@@ -15,6 +15,10 @@ settings:
     DEAD_CODE_STRIPPING: YES
     ASSETCATALOG_COMPILER_OPTIMIZATION: space
     ENABLE_NS_ASSERTIONS: NO
+    # Xcode 26 packs debug builds into <Target>.debug.dylib, which breaks
+    # embeddedBinaryValidationUtility on embedded .appex targets
+    # ("Couldn't load Info dictionary"). Classic layout avoids it.
+    ENABLE_DEBUG_DYLIB: NO
 
 targets:
   KBlock:
