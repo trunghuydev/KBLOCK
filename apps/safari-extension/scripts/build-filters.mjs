@@ -166,11 +166,11 @@ const ARTIFACT_OPTIONS = /\$[a-z][a-z\-]*(,[a-z][a-z\-]*)+$/i;
  * Global navigation guard: EasyList/EasyPrivacy contain thousands of broad
  * patterns ("-assets/ads.", "&track=...") and their rules carry no
  * resourceTypes, so DNR would match MAIN_FRAME too and pages would fail to
- * load. Converter skips $popup/$document rules, so NOTHING intentionally
- * blocks main_frame — one high-priority allow rule makes navigation always
- * possible while every subresource rule still applies.
- * (priority 2 beats the converted block rules at priority 1, but stays below
- * custom user rules at 100 and the whitelist at 3000.)
+ * load. One high-priority allow rule makes navigation always possible while
+ * every subresource rule still applies.
+ * (priority 2 beats match-all block rules flattened to priority 1, but stays
+ * below $popup/$doc main_frame blocks at 300, custom user rules at 100+ and
+ * the whitelist at 3000.)
  */
 const MAIN_FRAME_ALLOW_RULE = {
   id: 999999,
@@ -187,23 +187,24 @@ function slimRule(rule) {
   // list-header lines like "[Adblock Plus 2.0]" leaking through as patterns.
   if (urlFilter && (ARTIFACT_OPTIONS.test(urlFilter) || urlFilter.startsWith('['))) return null;
 
-  // Block rules don't need priority 100 — the main-frame allow guard at
-  // priority 2 must stay above them, and allow rules beat blocks at equal
-  // priority anyway. Priority 1 keeps semantics and saves bytes.
-  let slim = rule;
-  if (rule.action?.type === 'block') {
-    slim = { ...rule, priority: 1 };
+  // Only match-all block rules (no resourceTypes) are flattened to priority 1
+  // so the main-frame guard above keeps navigation alive. Rules WITH
+  // resourceTypes keep the converter's priority: $script etc. never hit
+  // main_frame, and $popup/$doc main_frame blocks (priority 300) intentionally
+  // sit above the guard.
+  if (rule.action?.type === 'block' && !condition.resourceTypes) {
+    rule = { ...rule, priority: 1 };
   }
 
   if (
     urlFilter &&
     PURE_DOMAIN_FILTER.test(urlFilter) &&
-    slim.condition.isUrlFilterCaseSensitive === false
+    rule.condition.isUrlFilterCaseSensitive === false
   ) {
-    const { isUrlFilterCaseSensitive, ...rest } = slim.condition;
-    slim.condition = rest;
+    const { isUrlFilterCaseSensitive, ...rest } = rule.condition;
+    rule = { ...rule, condition: rest };
   }
-  return slim;
+  return rule;
 }
 
 function sanitizeDnrRules(rules, maxRules) {
@@ -261,6 +262,9 @@ const meta = { generatedAt: new Date().toISOString(), sources: {} };
 const hideGlobal = [];
 const hideScoped = [];
 const hideExceptions = [];
+const removeparamAll = [];
+const removeparamSeen = new Set();
+const REMOVEPARAM_CAP = 5000;
 
 for (const source of SOURCES) {
   const text = await fetchList(source);
@@ -275,8 +279,22 @@ for (const source of SOURCES) {
   const parsed = parse(text);
   const converted = convert(parsed);
 
-  const rules = sanitizeDnrRules(stripDebugComments(converted.rules), source.maxRules);
-  writeFileSync(join(outDir, source.out), JSON.stringify([...rules, MAIN_FRAME_ALLOW_RULE]));
+  // Partition: $removeparam rules (redirect+queryTransform) go into ONE
+  // dedicated ruleset so a Safari build without transform support only loses
+  // param stripping — never the whole extension.
+  const blockRules = [];
+  for (const rule of sanitizeDnrRules(stripDebugComments(converted.rules), source.maxRules)) {
+    if (rule.action?.type === 'redirect') {
+      const key = JSON.stringify([rule.condition, rule.action]);
+      if (!removeparamSeen.has(key) && removeparamAll.length < REMOVEPARAM_CAP) {
+        removeparamSeen.add(key);
+        removeparamAll.push(rule);
+      }
+    } else {
+      blockRules.push(rule);
+    }
+  }
+  writeFileSync(join(outDir, source.out), JSON.stringify([...blockRules, MAIN_FRAME_ALLOW_RULE]));
 
   let globalCount = 0;
   for (const entry of converted.elementHideSelectors) {
@@ -297,16 +315,20 @@ for (const source of SOURCES) {
 
   meta.sources[source.id] = {
     status: 'ok',
-    networkRules: rules.length,
+    networkRules: blockRules.length,
     elementHide: globalCount,
     skipped: converted.skipped.length,
     unsupported: parsed.stats.unsupported,
   };
   console.log(
-    `[KBlock Filters] ${source.id}: ${rules.length} DNR rules, ` +
+    `[KBlock Filters] ${source.id}: ${blockRules.length} block rules, ` +
       `${converted.skipped.length} skipped, ${parsed.stats.unsupported} unsupported`,
   );
 }
+
+// $removeparam ruleset (all sources merged, deduped, capped).
+writeFileSync(join(outDir, 'removeparam_rules.json'), JSON.stringify(removeparamAll));
+meta.removeparam = removeparamAll.length;
 
 // Exceptions: selectors that must NOT be hidden on specific domains.
 const exceptionMap = {};

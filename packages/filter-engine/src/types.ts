@@ -42,6 +42,9 @@ export interface NetworkRuleOptions {
   domains?: string[];          // $domain=example.com|~other.com
   notDomains?: string[];       // domains prefixed with ~
   important?: boolean;         // $important
+  popup?: boolean;             // $popup — block the document itself (new tab)
+  document?: boolean;          // $doc / $document — block the page
+  removeparam?: string[];      // $removeparam=a|b — strip query params
 }
 
 export interface ParsedNetworkRule {
@@ -92,7 +95,8 @@ export type UnsupportedReason =
   | 'popup'                    // $popup, $popunder
   | 'unknown-option'           // Unknown $ modifier
   | 'parse-error'              // Could not parse at all
-  | 'regex-too-complex';       // Regex pattern likely to cause performance issues
+  | 'regex-too-complex'        // Regex pattern likely to cause performance issues
+  | 'removeparam';             // $removeparam variant we cannot represent
 
 // ─── Union Type ───────────────────────────────────────────────────────────────
 

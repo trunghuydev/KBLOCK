@@ -1,1 +1,15 @@
-[{"id":1,"priority":1,"action":{"type":"block"},"condition":{"urlFilter":"/?uclick=*;uclickhash=$removeparam","isUrlFilterCaseSensitive":false}},{"id":2,"priority":1,"action":{"type":"block"},"condition":{"urlFilter":"/?rb=*&zoneid=$removeparam","isUrlFilterCaseSensitive":false}},{"id":3,"priority":1,"action":{"type":"block"},"condition":{"urlFilter":"/viewforum.php?$removeparam=sid","isUrlFilterCaseSensitive":false}},{"id":4,"priority":1,"action":{"type":"block"},"condition":{"urlFilter":"/viewtopic.php?$removeparam=sid","isUrlFilterCaseSensitive":false}},{"id":5,"priority":1,"action":{"type":"block"},"condition":{"urlFilter":"/landing.$removeparam=ref","isUrlFilterCaseSensitive":false}},{"id":6,"priority":1,"action":{"type":"block"},"condition":{"urlFilter":"/landing.$removeparam=clickid","isUrlFilterCaseSensitive":false}},{"id":7,"priority":1,"action":{"type":"block"},"condition":{"urlFilter":"/landing.$removeparam=pixelid","isUrlFilterCaseSensitive":false}},{"id":8,"priority":900,"action":{"type":"allow"},"condition":{"urlFilter":"/authentication/login?analytics_trace_id=$removeparam=analytics_trace_id","isUrlFilterCaseSensitive":false}},{"id":9,"priority":900,"action":{"type":"allow"},"condition":{"urlFilter":"/e/er?$removeparam=elqCampaignId,domain=s1740541080.t.eloqua.com|app.econnect.utexas.edu|clk.texaslonghorns.com","isUrlFilterCaseSensitive":false}},{"id":10,"priority":900,"action":{"type":"allow"},"condition":{"urlFilter":"/e/er?$removeparam=elqTrackId,domain=s1740541080.t.eloqua.com|app.econnect.utexas.edu|clk.texaslonghorns.com","isUrlFilterCaseSensitive":false}},{"id":11,"priority":900,"action":{"type":"allow"},"condition":{"urlFilter":"/e/er?$removeparam=elq,domain=s1740541080.t.eloqua.com|app.econnect.utexas.edu|clk.texaslonghorns.com","isUrlFilterCaseSensitive":false}},{"id":12,"priority":900,"action":{"type":"allow"},"condition":{"urlFilter":"/e/er?$removeparam=elqaid,domain=s1740541080.t.eloqua.com|app.econnect.utexas.edu|clk.texaslonghorns.com","isUrlFilterCaseSensitive":false}},{"id":13,"priority":900,"action":{"type":"allow"},"condition":{"urlFilter":"/e/er?$removeparam=elqat,domain=s1740541080.t.eloqua.com|app.econnect.utexas.edu|clk.texaslonghorns.com","isUrlFilterCaseSensitive":false}},{"id":14,"priority":900,"action":{"type":"allow"},"condition":{"urlFilter":"/e/er?$removeparam=elqak,domain=s1740541080.t.eloqua.com|app.econnect.utexas.edu|clk.texaslonghorns.com","isUrlFilterCaseSensitive":false}},{"id":15,"priority":900,"action":{"type":"allow"},"condition":{"urlFilter":"/embed/comments^$removeparam,~third-party,domain=clickhole.com|lifehacker.com|splinternews.com|avclub.com|deadspin.com|gizmodo.com|jalopnik.com|jezebel.com|kotaku.com|qz.com|theinventory.com|theonion.com|theroot.com|thetakeout.com","isUrlFilterCaseSensitive":false}},{"id":999999,"priority":2,"action":{"type":"allow"},"condition":{"resourceTypes":["main_frame"]}}]
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "||kblock-stub.invalid^",
+      "resourceTypes": [
+        "other"
+      ]
+    }
+  }
+]

@@ -40,6 +40,7 @@ public final class AppGroupManager: ObservableObject {
     @Published public var antiPopupMode: String = "balanced" { didSet { persist() } }
     @Published public var antiTracking: Bool = true { didSet { persist() } }
     @Published public var cookieBanners: Bool = true { didSet { persist() } }
+    @Published public var autoUpdate: Bool = true { didSet { persist() } }
     @Published public var customRules: [CustomFilterRule] = [] { didSet { persist() } }
     @Published public var elementRules: [ElementFilterRule] = [] { didSet { persist() } }
 
@@ -62,6 +63,7 @@ public final class AppGroupManager: ObservableObject {
         static let antiPopupMode = "kblock_antipopup_mode"
         static let antiTracking = "kblock_anti_tracking"
         static let cookieBanners = "kblock_cookie_banners"
+        static let autoUpdate = "kblock_auto_update"
         static let customRules = "kblock_custom_rules"
         static let elementRules = "kblock_element_rules"
         static let stats = "kblock_stats"
@@ -161,6 +163,7 @@ public final class AppGroupManager: ObservableObject {
         defaults.set(antiPopupMode, forKey: Key.antiPopupMode)
         defaults.set(antiTracking, forKey: Key.antiTracking)
         defaults.set(cookieBanners, forKey: Key.cookieBanners)
+        defaults.set(autoUpdate, forKey: Key.autoUpdate)
         if let data = try? JSONEncoder().encode(customRules) {
             defaults.set(String(data: data, encoding: .utf8) ?? "[]", forKey: Key.customRules)
         }
@@ -188,6 +191,7 @@ public final class AppGroupManager: ObservableObject {
         antiPopupMode = defaults?.string(forKey: Key.antiPopupMode) ?? "balanced"
         antiTracking = defaults?.object(forKey: Key.antiTracking) as? Bool ?? true
         cookieBanners = defaults?.object(forKey: Key.cookieBanners) as? Bool ?? true
+        autoUpdate = defaults?.object(forKey: Key.autoUpdate) as? Bool ?? true
 
         if let json = defaults?.string(forKey: Key.customRules),
            let data = json.data(using: .utf8),

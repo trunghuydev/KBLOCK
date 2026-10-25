@@ -14,6 +14,7 @@
  *   throttled-pushed to the native side so the app can display them.
  */
 
+import { clearFilterUpdates, runFilterUpdate } from '../lib/filter-updater';
 import {
   DEFAULT_STATE,
   DYNAMIC_RULE_ID_START,
@@ -85,6 +86,7 @@ async function getState(): Promise<ExtensionState> {
     if (Array.isArray(result[STORAGE_KEYS.WHITELIST])) state.whitelist = result[STORAGE_KEYS.WHITELIST];
     if (typeof result[STORAGE_KEYS.ANTI_POPUP_MODE] === 'string') state.antiPopupMode = result[STORAGE_KEYS.ANTI_POPUP_MODE];
     if (typeof result[STORAGE_KEYS.ANTI_TRACKING] === 'boolean') state.antiTracking = result[STORAGE_KEYS.ANTI_TRACKING];
+    if (typeof result[STORAGE_KEYS.AUTO_UPDATE] === 'boolean') state.autoUpdate = result[STORAGE_KEYS.AUTO_UPDATE];
     if (typeof result[STORAGE_KEYS.COOKIE_BANNERS] === 'boolean') state.cookieBanners = result[STORAGE_KEYS.COOKIE_BANNERS];
     if (Array.isArray(result[STORAGE_KEYS.CUSTOM_RULES])) state.customRules = result[STORAGE_KEYS.CUSTOM_RULES];
     if (Array.isArray(result[STORAGE_KEYS.ELEMENT_RULES])) state.elementRules = result[STORAGE_KEYS.ELEMENT_RULES];
@@ -117,6 +119,7 @@ interface NativeConfigPatch {
   antiPopupMode?: AntiPopupMode;
   antiTracking?: boolean;
   cookieBanners?: boolean;
+  autoUpdate?: boolean;
   customRules?: CustomRule[];
   elementRules?: ElementRule[];
 }
@@ -129,6 +132,7 @@ interface NativeConfig {
   antiPopupMode: AntiPopupMode;
   antiTracking: boolean;
   cookieBanners: boolean;
+  autoUpdate: boolean;
   customRules: CustomRule[];
   elementRules: ElementRule[];
 }
@@ -173,6 +177,7 @@ async function readNativeConfig(): Promise<NativeConfig | null> {
     antiPopupMode: (typeof res.antiPopupMode === 'string' ? res.antiPopupMode : 'balanced') as AntiPopupMode,
     antiTracking: res.antiTracking === undefined ? true : Boolean(res.antiTracking),
     cookieBanners: res.cookieBanners === undefined ? true : Boolean(res.cookieBanners),
+    autoUpdate: res.autoUpdate === undefined ? true : Boolean(res.autoUpdate),
     customRules: parseJsonOr<CustomRule[]>(res.customRules, []),
     elementRules: parseJsonOr<ElementRule[]>(res.elementRules, []),
   };
@@ -197,6 +202,7 @@ async function syncFromNative(): Promise<void> {
     [STORAGE_KEYS.ANTI_POPUP_MODE]: native.antiPopupMode,
     [STORAGE_KEYS.ANTI_TRACKING]: native.antiTracking,
     [STORAGE_KEYS.COOKIE_BANNERS]: native.cookieBanners,
+    [STORAGE_KEYS.AUTO_UPDATE]: native.autoUpdate,
     [STORAGE_KEYS.CUSTOM_RULES]: native.customRules,
     [STORAGE_KEYS.ELEMENT_RULES]: native.elementRules,
   };
@@ -298,7 +304,8 @@ async function syncRulesets(enabled: boolean, categories: FilterCategories): Pro
 async function removeAllDynamicRules(): Promise<void> {
   try {
     const existing = await browser.declarativeNetRequest.getDynamicRules();
-    const ids = existing.map((r) => r.id).filter((id) => id >= DYNAMIC_RULE_ID_START);
+    // Updater-owned rules (30000+) are managed exclusively by filter-updater.
+    const ids = existing.map((r) => r.id).filter((id) => id >= DYNAMIC_RULE_ID_START && id < 30000);
     if (ids.length === 0) return;
     await browser.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: ids,
@@ -370,6 +377,7 @@ interface NetworkRuleInputs {
 
 async function applyNetworkRules(inputs: NetworkRuleInputs): Promise<void> {
   await syncRulesets(inputs.enabled, inputs.filterCategories);
+  if (!inputs.enabled) await clearFilterUpdates();
 
   try {
     const dynamic: DnrRule[] = inputs.enabled
@@ -608,6 +616,13 @@ async function handleSetAntiTracking(enabled: boolean): Promise<MessageResponse>
   return { success: true };
 }
 
+async function handleSetAutoUpdate(enabled: boolean): Promise<MessageResponse> {
+  await savePartialState({ [STORAGE_KEYS.AUTO_UPDATE]: enabled });
+  await pushConfigToNative({ autoUpdate: enabled });
+  if (!enabled) await clearFilterUpdates();
+  return { success: true };
+}
+
 async function handleSetCookieBanners(enabled: boolean): Promise<MessageResponse> {
   await savePartialState({ [STORAGE_KEYS.COOKIE_BANNERS]: enabled });
   await pushConfigToNative({ cookieBanners: enabled });
@@ -733,6 +748,7 @@ async function initialize(): Promise<void> {
       | { create?: (name: string, info: { periodInMinutes: number }) => void }
       | undefined;
     alarmsApi?.create?.('kblock-native-sync', { periodInMinutes: 1 });
+    alarmsApi?.create?.('kblock-filter-update', { periodInMinutes: 1440 });
   } catch {
     // Alarms unavailable — content-script wake-ups still trigger syncs.
   }
@@ -783,6 +799,17 @@ browser.runtime.onMessage.addListener(
           case 'SET_ANTI_TRACKING':
             response = await handleSetAntiTracking(Boolean(message.payload));
             break;
+          case 'SET_AUTO_UPDATE':
+            response = await handleSetAutoUpdate(Boolean(message.payload));
+            break;
+          case 'UPDATE_FILTERS': {
+            const current = await getState();
+            const result = current.enabled
+              ? await runFilterUpdate(true)
+              : { appliedCount: 0, lastCheck: new Date().toISOString(), changed: false };
+            response = { success: true, data: result };
+            break;
+          }
           case 'SET_COOKIE_BANNERS':
             response = await handleSetCookieBanners(Boolean(message.payload));
             break;
@@ -845,6 +872,12 @@ try {
 try {
   browser.alarms?.onAlarm?.addListener?.((alarm) => {
     if (alarm.name === 'kblock-native-sync') void syncFromNative();
+    if (alarm.name === 'kblock-filter-update') {
+      void (async () => {
+        const s = await getState();
+        if (s.enabled && s.autoUpdate) await runFilterUpdate(false);
+      })();
+    }
   });
 } catch {
   // Alarms optional.

@@ -155,6 +155,8 @@ function renderState(
   if (toggleTracking) toggleTracking.checked = cats.tracking;
   if (toggleAntiTracking) toggleAntiTracking.checked = state.antiTracking;
   if (toggleCookieBanners) toggleCookieBanners.checked = state.cookieBanners;
+  const toggleAutoUpdate = document.getElementById('toggle-auto-update') as HTMLInputElement | null;
+  if (toggleAutoUpdate) toggleAutoUpdate.checked = state.autoUpdate;
 
   // Per-site blocked counter
   const siteBlockedEl = document.getElementById('site-blocked');
@@ -224,6 +226,32 @@ async function onAntiTrackingToggle(enabled: boolean): Promise<void> {
   const response = await sendMessage({ type: 'SET_ANTI_TRACKING', payload: enabled });
   if (response.success && currentState) {
     currentState = { ...currentState, antiTracking: enabled };
+  }
+}
+
+async function onAutoUpdateToggle(enabled: boolean): Promise<void> {
+  const response = await sendMessage({ type: 'SET_AUTO_UPDATE', payload: enabled });
+  if (response.success && currentState) {
+    currentState = { ...currentState, autoUpdate: enabled };
+  }
+}
+
+async function onUpdateNow(): Promise<void> {
+  const statusEl = document.getElementById('update-status');
+  const labelEl = document.getElementById('update-now-label');
+  if (labelEl) labelEl.textContent = 'Đang cập nhật...';
+  try {
+    const response = await sendMessage({ type: 'UPDATE_FILTERS' });
+    if (response.success && statusEl) {
+      const data = response.data as { appliedCount: number; changed: boolean; lastCheck: string };
+      statusEl.textContent = data.changed
+        ? `✓ Đã áp dụng ${data.appliedCount.toLocaleString()} rules mới`
+        : 'Bộ lọc đã là bản mới nhất';
+    } else if (statusEl) {
+      statusEl.textContent = 'Cập nhật thất bại — thử lại sau';
+    }
+  } finally {
+    if (labelEl) labelEl.textContent = 'Cập nhật bộ lọc ngay';
   }
 }
 
@@ -321,6 +349,10 @@ async function init(): Promise<void> {
 
     const cookieBannersCheck = document.getElementById('toggle-cookie-banners') as HTMLInputElement | null;
     cookieBannersCheck?.addEventListener('change', () => void onCookieBannersToggle(cookieBannersCheck.checked));
+
+    const autoUpdateCheck = document.getElementById('toggle-auto-update') as HTMLInputElement | null;
+    autoUpdateCheck?.addEventListener('change', () => void onAutoUpdateToggle(autoUpdateCheck.checked));
+    el('update-now-btn').addEventListener('click', () => void onUpdateNow());
 
     el('pick-element-btn').addEventListener('click', () => void onPickElement());
 

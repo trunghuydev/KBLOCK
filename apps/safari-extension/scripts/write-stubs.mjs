@@ -17,7 +17,16 @@ const stub = [
   },
 ];
 
-for (const f of ['abpvn_full.json', 'easylist_full.json', 'easyprivacy_full.json']) {
+for (const f of [
+  'abpvn_full.json',
+  'easylist_full.json',
+  'easyprivacy_full.json',
+  'adguard_mobile_full.json',
+  'adguard_spyware_full.json',
+  'fanboy_annoyance_full.json',
+  'adguard_urltracking_full.json',
+  'removeparam_rules.json',
+]) {
   writeFileSync(join(outDir, f), JSON.stringify(stub, null, 2) + '\n');
 }
 writeFileSync(

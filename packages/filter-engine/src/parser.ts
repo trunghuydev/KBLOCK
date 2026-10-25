@@ -61,7 +61,6 @@ const UNSUPPORTED_OPTIONS = new Set([
   'badfilter',
   'rewrite',
   'popunder',
-  'popup',
 ]);
 
 // Metadata keys we care about
@@ -114,6 +113,24 @@ function parseNetworkOptions(optionStr: string): {
       options.thirdParty = true;
     } else if (opt === 'important') {
       options.important = true;
+    } else if (opt === 'popup') {
+      options.popup = true;
+    } else if (opt === 'doc' || opt === 'document') {
+      options.document = true;
+    } else if (opt === 'removeparam') {
+      // Bare $removeparam (strip every query param) has no DNR equivalent.
+      return { options, unsupported: 'removeparam' };
+    } else if (opt.startsWith('removeparam=')) {
+      const value = opt.slice('removeparam='.length);
+      // DNR removeParams only supports exact names — no regex or value match.
+      if (!value || value.startsWith('/') || /[\\/:*=]/.test(value)) {
+        return { options, unsupported: 'removeparam' };
+      }
+      const names = value.split('|').map((n) => n.trim()).filter(Boolean);
+      if (names.length === 0 || names.length > 20) {
+        return { options, unsupported: 'removeparam' };
+      }
+      options.removeparam = names;
     } else if (opt.startsWith('domain=')) {
       const rawDomains = opt.slice('domain='.length).split('|');
       options.domains = options.domains ?? [];
@@ -197,8 +214,11 @@ function parseNetworkRule(
       if (unsupported.startsWith('badfilter')) {
         return { kind: 'unsupported', raw: line, lineNumber, reason: 'badfilter' };
       }
-      if (unsupported.startsWith('popunder') || unsupported.startsWith('popup')) {
+      if (unsupported.startsWith('popunder')) {
         return { kind: 'unsupported', raw: line, lineNumber, reason: 'popup' };
+      }
+      if (unsupported === 'removeparam') {
+        return { kind: 'unsupported', raw: line, lineNumber, reason: 'removeparam' };
       }
       return { kind: 'unsupported', raw: line, lineNumber, reason: 'unknown-option' };
     }

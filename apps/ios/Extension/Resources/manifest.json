@@ -88,6 +88,11 @@
         "id": "adguard_urltracking_rules",
         "enabled": true,
         "path": "rules/generated/adguard_urltracking_full.json"
+      },
+      {
+        "id": "removeparam_rules",
+        "enabled": true,
+        "path": "rules/generated/removeparam_rules.json"
       }
     ]
   },

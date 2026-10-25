@@ -37,6 +37,14 @@ export interface DnrCondition {
 
 export interface DnrAction {
   type: DnrActionType;
+  // For $removeparam rules — strip query parameters via a redirect transform.
+  redirect?: {
+    transform?: {
+      queryTransform?: {
+        removeParams?: string[];
+      };
+    };
+  };
 }
 
 export interface DnrRule {
@@ -82,6 +90,7 @@ export interface ConversionStats {
 
 const PRIORITY_ALLOW = 900;        // Allow rules (@@) override block
 const PRIORITY_BLOCK_IMPORTANT = 500; // $important block rules
+const PRIORITY_DOCUMENT = 300;     // $popup / $doc — intentional main_frame blocks
 const PRIORITY_BLOCK = 100;        // Normal block rules
 
 // ─── Resource Type Mapping ────────────────────────────────────────────────────
@@ -157,8 +166,35 @@ function convertNetworkRule(
   }
 
   const isAllow = rule.kind === 'network-allow';
+  if (isAllow && rule.options.removeparam) {
+    skipped.push({ raw: rule.raw, lineNumber: rule.lineNumber, reason: 'removeparam' });
+    return null;
+  }
+
+  // $removeparam — rewrite the URL with the listed query params stripped.
+  if (rule.options.removeparam && rule.options.removeparam.length > 0) {
+    return {
+      id: getNextId(),
+      priority: PRIORITY_BLOCK,
+      action: {
+        type: 'redirect',
+        redirect: { transform: { queryTransform: { removeParams: rule.options.removeparam } } },
+      },
+      condition,
+      _comment: rule.raw,
+    };
+  }
+
+  // $popup / $doc — the rule targets the page itself, not a subresource.
+  const isDocumentRule = rule.options.popup === true || rule.options.document === true;
+  if (isDocumentRule) {
+    condition.resourceTypes = ['main_frame'];
+  }
+
   const priority = isAllow
     ? PRIORITY_ALLOW
+    : isDocumentRule
+    ? PRIORITY_DOCUMENT
     : rule.options.important
     ? PRIORITY_BLOCK_IMPORTANT
     : PRIORITY_BLOCK;
@@ -182,7 +218,8 @@ function deduplicateRules(rules: DnrRule[]): { rules: DnrRule[]; removed: number
   for (const rule of rules) {
     // Fingerprint: action + urlFilter/regexFilter + domainType + resourceTypes
     const fingerprint = JSON.stringify({
-      action: rule.action.type,
+      action: rule.action,
+      redirect: rule.action.redirect,
       urlFilter: rule.condition.urlFilter,
       regexFilter: rule.condition.regexFilter,
       domainType: rule.condition.domainType,

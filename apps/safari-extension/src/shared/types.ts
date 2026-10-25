@@ -23,6 +23,8 @@ export interface ExtensionState {
   antiPopupMode: AntiPopupMode;
   antiTracking: boolean;
   cookieBanners: boolean;
+  /** Daily runtime filter updates (dynamic rules). */
+  autoUpdate: boolean;
   customRules: CustomRule[];
   elementRules: ElementRule[];
   activity: BlockedEvent[];
@@ -89,6 +91,8 @@ export type MessageType =
   | 'SET_ANTI_TRACKING'
   | 'SET_COOKIE_BANNERS'
   | 'SET_CUSTOM_RULES'
+  | 'SET_AUTO_UPDATE'
+  | 'UPDATE_FILTERS'
   | 'ADD_ELEMENT_RULE'
   | 'REMOVE_ELEMENT_RULE'
   | 'START_ELEMENT_PICKER'
@@ -121,6 +125,8 @@ export const STORAGE_KEYS = {
   ELEMENT_RULES: 'kblock_element_rules',
   ACTIVITY: 'kblock_activity',
   SITE_STATS: 'kblock_site_stats',
+  AUTO_UPDATE: 'kblock_auto_update',
+  FILTER_UPDATE_STATE: 'kblock_filter_update_state',
   STATS: 'kblock_stats',
   CONFIG_VERSION: 'kblock_config_version',
 } as const;
@@ -140,6 +146,7 @@ export const DEFAULT_STATE: ExtensionState = {
   antiPopupMode: 'balanced',
   antiTracking: true,
   cookieBanners: true,
+  autoUpdate: true,
   customRules: [],
   elementRules: [],
   activity: [],

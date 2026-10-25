@@ -1,6 +1,6 @@
 {
   "name": "kblock-safari-extension",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "KBlock Safari Web Extension — ad blocker for Safari on iOS",
   "private": true,
   "scripts": {
@@ -28,5 +28,8 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "license": "MPL-2.0"
+  "license": "MPL-2.0",
+  "dependencies": {
+    "@kblock/filter-engine": "*"
+  }
 }

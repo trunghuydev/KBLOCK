@@ -34,6 +34,7 @@ public class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         static let antiPopupMode = "kblock_antipopup_mode"
         static let antiTracking = "kblock_anti_tracking"
         static let cookieBanners = "kblock_cookie_banners"
+        static let autoUpdate = "kblock_auto_update"
         static let customRules = "kblock_custom_rules"
         static let elementRules = "kblock_element_rules"
         static let stats = "kblock_stats"
@@ -112,6 +113,7 @@ public class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             "antiPopupMode": d.string(forKey: Key.antiPopupMode) ?? "balanced",
             "antiTracking": d.object(forKey: Key.antiTracking) as? Bool ?? true,
             "cookieBanners": d.object(forKey: Key.cookieBanners) as? Bool ?? true,
+            "autoUpdate": d.object(forKey: Key.autoUpdate) as? Bool ?? true,
         ]
 
         if let raw = d.string(forKey: Key.customRules),
@@ -175,6 +177,9 @@ public class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         }
         if let cookieBanners = payload["cookieBanners"] as? Bool {
             d.set(cookieBanners, forKey: Key.cookieBanners)
+        }
+        if let autoUpdate = payload["autoUpdate"] as? Bool {
+            d.set(autoUpdate, forKey: Key.autoUpdate)
         }
         if let rules = payload["customRules"] as? [[String: Any]],
            JSONSerialization.isValidJSONObject(rules),

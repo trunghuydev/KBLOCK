@@ -198,3 +198,70 @@ describe('Converter — stripDebugComments', () => {
     expect(stripped[0].condition).toBeDefined();
   });
 });
+
+// ─── AdGuard-modern options (v0.3 engine) ─────────────────────────────────────
+
+describe('Converter — $removeparam', () => {
+  it('converts $removeparam=name into a redirect queryTransform rule', () => {
+    const parsed = parse('||example.com^$removeparam=fbclid');
+    const result = convert(parsed);
+    const rule = result.rules[0]!;
+
+    expect(rule.action.type).toBe('redirect');
+    expect(rule.action.redirect?.transform?.queryTransform?.removeParams).toEqual(['fbclid']);
+    expect(rule.condition.urlFilter).toBe('||example.com^');
+  });
+
+  it('converts multi-param $removeparam=a|b', () => {
+    const parsed = parse('||example.com^$removeparam=fbclid|gclid');
+    const result = convert(parsed);
+    expect(result.rules[0]!.action.redirect?.transform?.queryTransform?.removeParams).toEqual([
+      'fbclid',
+      'gclid',
+    ]);
+  });
+
+  it('skips regex and value-matched $removeparam variants', () => {
+    const parsed = parse([
+      '||a.com^$removeparam=/^utm_.*/',
+      '||b.com^$removeparam=id:123',
+      '||c.com^$removeparam',
+    ].join('\n'));
+    const result = convert(parsed);
+    expect(result.rules).toHaveLength(0);
+    expect(result.skipped.every((s) => s.reason === 'removeparam')).toBe(true);
+  });
+
+  it('does not convert allow rules with $removeparam', () => {
+    const parsed = parse('@@||example.com^$removeparam=fbclid');
+    const result = convert(parsed);
+    expect(result.rules).toHaveLength(0);
+  });
+});
+
+describe('Converter — $popup / $doc', () => {
+  it('converts $popup into a main_frame block at document priority', () => {
+    const parsed = parse('||popup-host.com^$popup,third-party');
+    const result = convert(parsed);
+    const rule = result.rules[0]!;
+
+    expect(rule.action.type).toBe('block');
+    expect(rule.condition.resourceTypes).toEqual(['main_frame']);
+    expect(rule.condition.domainType).toBe('thirdParty');
+    expect(rule.priority).toBe(300);
+  });
+
+  it('converts $doc into a main_frame block', () => {
+    const parsed = parse('||malware.site^$doc');
+    const result = convert(parsed);
+    expect(result.rules[0]!.condition.resourceTypes).toEqual(['main_frame']);
+    expect(result.rules[0]!.priority).toBe(300);
+  });
+
+  it('keeps $important blocks at the important priority', () => {
+    const parsed = parse('||ads.example^$important,script');
+    const result = convert(parsed);
+    expect(result.rules[0]!.priority).toBe(500);
+    expect(result.rules[0]!.condition.resourceTypes).toEqual(['script']);
+  });
+});
