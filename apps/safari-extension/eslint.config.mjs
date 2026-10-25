@@ -1,6 +1,7 @@
 import js from "@eslint/js";
 import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
+import globals from "globals";
 
 export default [
   js.configs.recommended,
@@ -11,6 +12,10 @@ export default [
       parserOptions: {
         project: "./tsconfig.json",
       },
+      globals: {
+        ...globals.browser,
+        browser: "readonly",
+      },
     },
     plugins: {
       "@typescript-eslint": tsPlugin,
@@ -18,7 +23,6 @@ export default [
     rules: {
       ...tsPlugin.configs.recommended.rules,
       "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/explicit-function-return-type": "warn",
       "no-console": ["warn", { allow: ["warn", "error"] }],
     },
   },

@@ -6,9 +6,18 @@ import SwiftUI
 
 @main
 struct KBlockApp: App {
+    @Environment(\.scenePhase) private var scenePhase
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+        }
+        .onChange(of: scenePhase) { phase in
+            // Re-read the App Group so stats the extension wrote while we
+            // were in the background show up immediately.
+            if phase == .active {
+                AppGroupManager.shared.refresh()
+            }
         }
     }
 }

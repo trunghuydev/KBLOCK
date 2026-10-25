@@ -7,14 +7,31 @@ import SwiftUI
 struct WhitelistView: View {
     @ObservedObject var state = AppGroupManager.shared
     @State private var newDomain: String = ""
-    @State private var showingAddAlert = false
 
     var body: some View {
         List {
             Section(header: Text("Hướng dẫn")) {
-                Text("Các tên miền trong danh sách này sẽ không bị chặn quảng cáo hoặc pop-up trong Safari.")
+                Text("Các tên miền trong danh sách này sẽ KHÔNG bị chặn quảng cáo hoặc pop-up trong Safari (bao gồm cả sub-domain).")
                     .font(.footnote)
                     .foregroundColor(KBlockTheme.textSecondary)
+            }
+
+            // Inline add row — alert với TextField chỉ hoạt động trên iOS 16+.
+            Section(header: Text("Thêm tên miền")) {
+                HStack(spacing: 10) {
+                    TextField("example.com", text: $newDomain)
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
+                        .keyboardType(.URL)
+                        .font(.body)
+
+                    Button(action: addDomain) {
+                        Text("Thêm")
+                            .font(.body.weight(.semibold))
+                            .foregroundColor(newDomain.isEmpty ? .gray : KBlockTheme.primary)
+                    }
+                    .disabled(newDomain.isEmpty)
+                }
             }
 
             Section(header: Text("Tên miền được bỏ qua (\(state.whitelist.count))")) {
@@ -41,29 +58,10 @@ struct WhitelistView: View {
             }
         }
         .navigationTitle("Danh sách trắng")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showingAddAlert = true }) {
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundColor(KBlockTheme.primary)
-                }
-            }
-        }
-        .alert("Thêm tên miền", isPresented: $showingAddAlert) {
-            TextField("example.com", text: $newDomain)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled(true)
-            Button("Thêm", action: {
-                if !newDomain.isEmpty {
-                    state.addWhitelistDomain(newDomain)
-                    newDomain = ""
-                }
-            })
-            Button("Hủy", role: .cancel) {
-                newDomain = ""
-            }
-        } message: {
-            Text("Nhập tên miền bạn muốn tắt chặn (ví dụ: dantri.com.vn)")
-        }
+    }
+
+    private func addDomain() {
+        state.addWhitelistDomain(newDomain)
+        newDomain = ""
     }
 }

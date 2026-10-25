@@ -9,104 +9,103 @@ struct FilterListsView: View {
 
     var body: some View {
         List {
-            Section(header: Text("Bộ lọc hoạt động")) {
+            Section(header: Text("Bộ lọc hoạt động"), footer: pipelineFooter) {
                 filterCard(
                     title: "🇻🇳 ABPVN — Web Việt Nam",
-                    description: "Bộ lọc tối ưu cho các trang web Việt Nam (phim ảnh, báo chí, truyện tranh, diễn đàn)",
-                    ruleCount: "8.420 quy tắc",
-                    version: "2026.10",
-                    isRecommended: true,
+                    description: "Quy tắc cho web Việt Nam (phim ảnh, báo chí, truyện tranh). Bản đầy đủ được nạp qua pipeline cập nhật bộ lọc.",
+                    ruleCount: pipelineRun ? "Bản đầy đủ" : "\(AppGroupManager.bundledAbpvnRules) quy tắc",
                     isOn: $state.filterAbpvn
                 )
 
                 filterCard(
                     title: "🎰 Chống Nhà cái & Cá cược",
-                    description: "Chặn sạch banner cá độ, casino, VSbet, CM88, SUN88, SUNWIN trên web phim lậu",
-                    ruleCount: "5.120 quy tắc",
-                    version: "2026.10",
-                    isRecommended: true,
+                    description: "Chặn banner cá độ, casino, VSbet, SUNWIN… trên web phim lậu.",
+                    ruleCount: "\(AppGroupManager.bundledGamblingRules) quy tắc",
                     isOn: $state.filterGambling
                 )
 
                 filterCard(
-                    title: "🚫 Chống Pop-up & Chuyển hướng",
-                    description: "Triệt tiêu bẫy clickjacking, tự động nhảy tab mới và thông báo cookie phiền phức",
-                    ruleCount: "6.300 quy tắc",
-                    version: "2026.10",
-                    isRecommended: true,
+                    title: "🚫 Chống Pop-up & Khó chịu",
+                    description: "Lớp cosmetic + anti-popup + element-hide từ bộ lọc: diệt banner nổi, bẫy clickjack, pop-under.",
+                    ruleCount: "Lớp nội dung",
                     isOn: $state.filterAnnoyances
                 )
 
                 filterCard(
+                    title: "🍪 Chặn banner cookie",
+                    description: "Ẩn popup hỏi consent/GDPR (OneTrust, Cookiebot…) và mở khóa cuộn trang.",
+                    ruleCount: "Lớp nội dung",
+                    isOn: $state.cookieBanners
+                )
+
+                filterCard(
                     title: "🌐 EasyList Quốc Tế",
-                    description: "Bộ lọc tiêu chuẩn chặn quảng cáo banner, video preroll và theo dõi toàn cầu",
-                    ruleCount: "48.500 quy tắc",
-                    version: "2026.10",
-                    isRecommended: true,
+                    description: "Quảng cáo banner, video preroll và tracker toàn cầu (kèm EasyPrivacy khi có bản đầy đủ).",
+                    ruleCount: pipelineRun ? "Bản đầy đủ" : "\(AppGroupManager.bundledEasylistRules) quy tắc",
                     isOn: $state.filterEasylist
                 )
             }
 
-            Section(header: Text("Năng lực quy tắc Safari (Apple iOS 15+)")) {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text("Tổng quy tắc kích hoạt:")
-                            .font(.subheadline)
-                            .foregroundColor(KBlockTheme.textPrimary)
-                        Spacer()
-                        Text("\(state.totalActiveRules.formatted()) / 150.000")
-                            .font(.subheadline.bold())
-                            .foregroundColor(KBlockTheme.primary)
-                    }
-
-                    ProgressView(value: Double(state.totalActiveRules), total: 150000)
-                        .accentColor(KBlockTheme.primary)
-
-                    Text("Apple đã nâng giới hạn Safari lên 150.000 quy tắc. KBlock sử dụng ~68.300 quy tắc, hoàn toàn mượt mà và tối ưu hiệu năng thiết bị.")
-                        .font(.footnote)
-                        .foregroundColor(KBlockTheme.textSecondary)
+            Section("Tổng quan") {
+                HStack {
+                    Text("Quy tắc đang chạy (báo bởi tiện ích)")
+                    Spacer()
+                    Text(extensionRuleLabel)
+                        .foregroundColor(KBlockTheme.primary)
+                        .bold()
                 }
-                .padding(.vertical, 4)
+                .font(.subheadline)
+
+                HStack {
+                    Text("Quy tắc động (tùy chỉnh + whitelist)")
+                    Spacer()
+                    Text("\(state.dynamicRuleCount) quy tắc")
+                        .foregroundColor(KBlockTheme.primary)
+                        .bold()
+                }
+                .font(.subheadline)
             }
         }
         .navigationTitle("Bộ lọc quảng cáo")
     }
 
-    private func filterCard(title: String, description: String, ruleCount: String, version: String, isRecommended: Bool, isOn: Binding<Bool>) -> some View {
+    /// The extension reports the real bundled rule count via the App Group.
+    private var pipelineRun: Bool {
+        state.extensionRuleCount > 100
+    }
+
+    private var extensionRuleLabel: String {
+        if state.extensionRuleCount > 0 {
+            return "\(state.extensionRuleCount.formatted()) quy tắc"
+        }
+        return "\(state.totalActiveRules) quy tắc đóng gói"
+    }
+
+    private var pipelineFooter: some View {
+        Text("Bản đóng gói hiện chứa 87 quy tắc chọn lọc. Pipeline nạp ABPVN/EasyList đầy đủ (hàng chục nghìn quy tắc, tự cập nhật) đang được phát triển ở Giai đoạn 2 — xem docs/filter-pipeline.md.")
+    }
+
+    private func filterCard(title: String, description: String, ruleCount: String, isOn: Binding<Bool>) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(title)
                     .font(.headline)
                     .foregroundColor(KBlockTheme.textPrimary)
 
-                if isRecommended {
-                    Text("Khuyên dùng")
-                        .font(.caption2)
-                        .fontWeight(.semibold)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(KBlockTheme.primary.opacity(0.12))
-                        .foregroundColor(KBlockTheme.primary)
-                        .cornerRadius(4)
-                }
-
                 Spacer()
 
                 Toggle("", isOn: isOn)
                     .labelsHidden()
+                    .toggleStyle(SwitchToggleStyle(tint: KBlockTheme.primary))
             }
 
             Text(description)
                 .font(.subheadline)
                 .foregroundColor(KBlockTheme.textSecondary)
 
-            HStack {
-                Label(ruleCount, systemImage: "shield.lefthalf.filled")
-                Spacer()
-                Text("Bản: \(version)")
-            }
-            .font(.caption)
-            .foregroundColor(KBlockTheme.textSecondary)
+            Label(ruleCount, systemImage: "shield.lefthalf.filled")
+                .font(.caption)
+                .foregroundColor(KBlockTheme.textSecondary)
         }
         .padding(.vertical, 6)
     }

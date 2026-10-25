@@ -97,3 +97,9 @@ filters/*.txt
 # ────────────────────────────────────────────
 tests/output/
 *.snap
+
+# ────────────────────────────────────────────
+# Filter pipeline output (converted from community lists — never committed)
+# ────────────────────────────────────────────
+apps/safari-extension/.filter-cache/
+apps/safari-extension/src/rules/generated/

@@ -61,18 +61,23 @@ async function getCurrentDomain(): Promise<string | null> {
   return null;
 }
 
-function calculateActiveRules(state: ExtensionState): number {
+/** Honest count: bundled static rules + active dynamic rules. */
+function calculateActiveRules(state: ExtensionState & { bundledRuleCount?: number }): number {
   if (!state.enabled) return 0;
-  let count = 0;
-  const cats = state.filterCategories;
-  if (cats.abpvn) count += 8420;
-  if (cats.gambling) count += 5120;
-  if (cats.easylist) count += 48500;
-  if (cats.annoyances) count += 6300;
-  return count;
+  const bundled = state.bundledRuleCount ?? 0;
+  const dynamic = state.whitelist.length + state.customRules.filter((r) => r.enabled).length;
+  return bundled + dynamic;
 }
 
-function renderState(state: ExtensionState, domain: string | null): void {
+function isSiteWhitelisted(state: ExtensionState, domain: string | null): boolean {
+  if (!domain) return false;
+  return state.whitelist.some((d) => domain === d || domain.endsWith(`.${d}`));
+}
+
+function renderState(
+  state: ExtensionState & { bundledRuleCount?: number },
+  domain: string | null,
+): void {
   const toggle = el<HTMLInputElement>('main-toggle');
   const statusTitle = el('status-title');
   const statusSubtitle = el('status-subtitle');
@@ -97,9 +102,9 @@ function renderState(state: ExtensionState, domain: string | null): void {
   currentDomain = domain;
   if (domain) {
     domainValue.textContent = domain;
-    const isWhitelisted = state.whitelist.includes(domain);
+    const whitelisted = isSiteWhitelisted(state, domain);
 
-    if (isWhitelisted) {
+    if (whitelisted) {
       siteStatusPill.textContent = 'Đã tắt trên trang này';
       siteStatusPill.className = 'badge whitelisted';
       whitelistBtn.classList.add('hidden');
@@ -118,7 +123,7 @@ function renderState(state: ExtensionState, domain: string | null): void {
     removeWhitelistBtn.classList.add('hidden');
   }
 
-  // Live Statistics Display (AdGuard Pro style)
+  // Live Statistics Display (honest numbers only)
   const totalBlockedEl = document.getElementById('stat-total-blocked');
   const dataSavedEl = document.getElementById('stat-data-saved');
   const popupsBlockedEl = document.getElementById('stat-popups-blocked');
@@ -135,11 +140,15 @@ function renderState(state: ExtensionState, domain: string | null): void {
   const toggleGambling = document.getElementById('toggle-filter-gambling') as HTMLInputElement | null;
   const toggleAnnoyances = document.getElementById('toggle-filter-annoyances') as HTMLInputElement | null;
   const toggleEasylist = document.getElementById('toggle-filter-easylist') as HTMLInputElement | null;
+  const toggleAntiTracking = document.getElementById('toggle-anti-tracking') as HTMLInputElement | null;
+  const toggleCookieBanners = document.getElementById('toggle-cookie-banners') as HTMLInputElement | null;
 
   if (toggleAbpvn) toggleAbpvn.checked = cats.abpvn;
   if (toggleGambling) toggleGambling.checked = cats.gambling;
   if (toggleAnnoyances) toggleAnnoyances.checked = cats.annoyances;
   if (toggleEasylist) toggleEasylist.checked = cats.easylist;
+  if (toggleAntiTracking) toggleAntiTracking.checked = state.antiTracking;
+  if (toggleCookieBanners) toggleCookieBanners.checked = state.cookieBanners;
 
   // Anti-Popup Mode Segmented Control
   const segButtons = document.querySelectorAll<HTMLButtonElement>('.seg-btn');
@@ -150,9 +159,9 @@ function renderState(state: ExtensionState, domain: string | null): void {
   const descEl = document.getElementById('antipopup-desc');
   if (descEl) {
     if (state.antiPopupMode === 'strict') {
-      descEl.textContent = 'Nghiêm ngặt: Khóa toàn bộ window.open và bẫy clickjacking tuyệt đối.';
+      descEl.textContent = 'Nghiêm ngặt: Khóa mọi pop-up chéo trang và bẫy clickjacking.';
     } else if (state.antiPopupMode === 'balanced') {
-      descEl.textContent = 'Cân bằng: Tự động diệt mọi pop-up quảng cáo và chuyển hướng độc hại.';
+      descEl.textContent = 'Cân bằng: Diệt pop-up quảng cáo và chuyển hướng độc hại.';
     } else {
       descEl.textContent = 'Tắt: Cho phép mọi pop-up (không khuyến nghị trên web phim).';
     }
@@ -184,6 +193,33 @@ async function onCategoryToggle(category: keyof FilterCategories, enabled: boole
       },
     };
     renderState(currentState, currentDomain);
+  }
+}
+
+async function onAntiTrackingToggle(enabled: boolean): Promise<void> {
+  const response = await sendMessage({ type: 'SET_ANTI_TRACKING', payload: enabled });
+  if (response.success && currentState) {
+    currentState = { ...currentState, antiTracking: enabled };
+  }
+}
+
+async function onCookieBannersToggle(enabled: boolean): Promise<void> {
+  const response = await sendMessage({ type: 'SET_COOKIE_BANNERS', payload: enabled });
+  if (response.success && currentState) {
+    currentState = { ...currentState, cookieBanners: enabled };
+  }
+}
+
+/** Ask the active tab's content script to enter element-picker mode. */
+async function onPickElement(): Promise<void> {
+  try {
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    const tab = tabs[0];
+    if (!tab?.id) return;
+    await browser.tabs.sendMessage(tab.id, { type: 'START_ELEMENT_PICKER' });
+    window.close();
+  } catch (err) {
+    console.warn('[KBlock Popup] Element picker failed:', err);
   }
 }
 
@@ -255,6 +291,14 @@ async function init(): Promise<void> {
     setupCategoryListener('toggle-filter-annoyances', 'annoyances');
     setupCategoryListener('toggle-filter-easylist', 'easylist');
 
+    const antiTrackingCheck = document.getElementById('toggle-anti-tracking') as HTMLInputElement | null;
+    antiTrackingCheck?.addEventListener('change', () => void onAntiTrackingToggle(antiTrackingCheck.checked));
+
+    const cookieBannersCheck = document.getElementById('toggle-cookie-banners') as HTMLInputElement | null;
+    cookieBannersCheck?.addEventListener('change', () => void onCookieBannersToggle(cookieBannersCheck.checked));
+
+    el('pick-element-btn').addEventListener('click', () => void onPickElement());
+
     // Anti-popup segmented buttons
     const segButtons = document.querySelectorAll<HTMLButtonElement>('.seg-btn');
     segButtons.forEach((btn) => {
@@ -267,7 +311,7 @@ async function init(): Promise<void> {
     console.warn('[KBlock Popup] Listener attachment:', err);
   }
 
-  let state: ExtensionState = { ...DEFAULT_STATE };
+  let state: ExtensionState & { bundledRuleCount?: number } = { ...DEFAULT_STATE };
   let domain: string | null = null;
 
   try {
@@ -277,7 +321,7 @@ async function init(): Promise<void> {
     ]);
 
     if (stateResponse.success && stateResponse.data) {
-      state = stateResponse.data as ExtensionState;
+      state = stateResponse.data as ExtensionState & { bundledRuleCount?: number };
     }
     domain = detectedDomain;
   } catch (err) {

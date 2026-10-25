@@ -5,7 +5,7 @@
 🛡️ **KBlock** — Trình chặn quảng cáo Safari miễn phí, mã nguồn mở cho iOS
 
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
-[![Status: Phase 0](https://img.shields.io/badge/Status-Phase%200%20Planning-yellow)]()
+[![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-blue)]()
 [![Platform: iOS 15+](https://img.shields.io/badge/Platform-iOS%2015%2B-blue)]()
 
 </div>
@@ -29,19 +29,19 @@
 
 ## Trạng thái dự án
 
-> 🚧 **Đang phát triển — Giai đoạn 0 (Khảo sát & Kế hoạch)**
+> 🚧 **Đang phát triển — PoC đã chạy, đang hoàn thiện tính năng**
 
 | Giai đoạn | Tên | Trạng thái |
 |-----------|-----|-----------|
-| 0 | Khảo sát & Kế hoạch | 🟡 Đang thực hiện |
-| 1 | Proof of Concept (iOS + Extension) | ⬜ Chưa bắt đầu |
-| 2 | Filter Engine | ⬜ Chưa bắt đầu |
-| 3 | Bộ lọc cộng đồng | ⬜ Chưa bắt đầu |
-| 4 | Popup & Redirect | ⬜ Chưa bắt đầu |
-| 5 | Giao diện SwiftUI | ⬜ Chưa bắt đầu |
-| 6 | Cập nhật & Rollback | ⬜ Chưa bắt đầu |
-| 7 | Bảo mật & Quyền riêng tư | ⬜ Chưa bắt đầu |
-| 8 | Build, Ký & SideStore | ⬜ Chưa bắt đầu |
+| 0 | Khảo sát & Kế hoạch | ✅ Hoàn thành |
+| 1 | Proof of Concept (iOS + Extension) | ✅ Hoàn thành |
+| 2 | Filter Engine | 🟢 Pipeline tải ABPVN/EasyList/EasyPrivacy → ~107K quy tắc DNR hoạt động |
+| 3 | Bộ lọc cộng đồng | 🟡 3 nguồn chính đã nối, mở rộng thêm nguồn |
+| 4 | Popup & Redirect | 🟢 Anti-popup + anti-tracking + cookie banner + element picker |
+| 5 | Giao diện SwiftUI | 🟡 Core xong (bộ lọc, whitelist, tùy chỉnh, nhật ký) + Widget |
+| 6 | Cập nhật & Rollback | 🟡 Pipeline build-time xong, runtime update đang làm |
+| 7 | Bảo mật & Quyền riêng tư | 🟡 100% on-device |
+| 8 | Build, Ký & SideStore | 🟡 XcodeGen + hướng dẫn xong |
 | 9 | Beta & Phát hành | ⬜ Chưa bắt đầu |
 
 ---
@@ -51,6 +51,8 @@
 KBlock bao gồm:
 - **1 ứng dụng iOS** (SwiftUI, container app)
 - **1 Safari Web Extension** (TypeScript + Manifest V3)
+
+Hai bên đồng bộ qua **App Group + native messaging** (`SafariWebExtensionHandler`): app là nguồn chân lý cho cấu hình (bộ lọc, whitelist, quy tắc tùy chỉnh), extension là nguồn chân lý cho thống kê và nhật ký chặn.
 
 Xem chi tiết: [docs/architecture.md](./docs/architecture.md)
 

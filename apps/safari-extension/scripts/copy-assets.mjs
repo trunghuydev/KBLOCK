@@ -39,8 +39,10 @@ mkdirSync(distDir, { recursive: true });
 copyAssets(srcDir, distDir);
 console.log('[KBlock] Assets copied ✓');
 
-// Sync complete dist/ into iOS Extension Resources
+// Sync complete dist/ into iOS Extension Resources (clean first so stale
+// files from previous builds, e.g. unbundled modules, don't linger)
 console.log('[KBlock] Syncing dist/ → apps/ios/Extension/Resources/');
+rmSync(iosExtensionResourcesDir, { recursive: true, force: true });
 mkdirSync(iosExtensionResourcesDir, { recursive: true });
 cpSync(distDir, iosExtensionResourcesDir, { recursive: true });
 console.log('[KBlock] Synced to iOS Extension Resources ✓');

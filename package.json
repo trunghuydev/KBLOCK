@@ -10,7 +10,8 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "check": "npm run build:check --workspaces --if-present"
+    "check": "npm run build:check --workspaces --if-present",
+    "build:filters": "node apps/safari-extension/scripts/build-filters.mjs --force"
   },
   "engines": {
     "node": ">=18.0.0"

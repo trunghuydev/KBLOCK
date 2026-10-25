@@ -15,19 +15,18 @@ struct ContentView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 20) {
-                        // Hero Status Card with Glow & Animation
                         heroStatusCard
 
-                        // Live Quick Stats
                         statsRow
 
-                        // Safari Setup Reminder Card
+                        if !state.hasAppGroup {
+                            appGroupWarningCard
+                        }
+
                         setupNoticeCard
 
-                        // Navigation Cards
                         navigationSection
 
-                        // Open Source & Privacy Footer
                         footerSection
                     }
                     .padding(.horizontal, 18)
@@ -39,6 +38,9 @@ struct ContentView: View {
             .sheet(isPresented: $showingSafariGuide) {
                 SafariSetupGuideView()
             }
+            .onAppear {
+                state.refresh()
+            }
         }
     }
 
@@ -47,17 +49,14 @@ struct ContentView: View {
     private var heroStatusCard: some View {
         VStack(spacing: 18) {
             ZStack {
-                // Outer Pulse Ring
                 Circle()
                     .fill(state.isEnabled ? KBlockTheme.primary.opacity(0.08) : Color.gray.opacity(0.06))
                     .frame(width: 110, height: 110)
 
-                // Inner Glow Ring
                 Circle()
                     .fill(state.isEnabled ? KBlockTheme.primary.opacity(0.16) : Color.gray.opacity(0.12))
                     .frame(width: 86, height: 86)
 
-                // Shield Icon
                 Image(systemName: state.isEnabled ? "checkmark.shield.fill" : "shield.slash.fill")
                     .font(.system(size: 42, weight: .semibold))
                     .foregroundColor(state.isEnabled ? KBlockTheme.primary : Color.gray)
@@ -70,7 +69,7 @@ struct ContentView: View {
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundColor(KBlockTheme.textPrimary)
 
-                Text(state.isEnabled ? "Quảng cáo, theo dõi và pop-up trên Safari đang bị triệt tiêu" : "Gạt công tắc bên dưới để tiếp tục bảo vệ thiết bị")
+                Text(state.isEnabled ? "Quảng cáo, theo dõi và pop-up trên Safari đang bị chặn" : "Gạt công tắc bên dưới để tiếp tục bảo vệ thiết bị")
                     .font(.subheadline)
                     .foregroundColor(KBlockTheme.textSecondary)
                     .multilineTextAlignment(.center)
@@ -99,12 +98,28 @@ struct ContentView: View {
     private var statsRow: some View {
         VStack(spacing: 10) {
             HStack(spacing: 10) {
-                statBox(number: "\(state.blockedCount.formatted())", title: "Tổng đã chặn", icon: "shield.fill")
-                statBox(number: "\(String(format: "%.1f", state.bandwidthSavedMB)) MB", title: "Dữ liệu tiết kiệm", icon: "arrow.down.circle.fill")
+                statBox(
+                    number: "\(state.stats.totalBlocked.formatted())",
+                    title: "Tổng đã chặn",
+                    icon: "shield.fill"
+                )
+                statBox(
+                    number: "\(String(format: "%.1f", state.stats.bandwidthSavedMB)) MB",
+                    title: "Dữ liệu tiết kiệm",
+                    icon: "arrow.down.circle.fill"
+                )
             }
             HStack(spacing: 10) {
-                statBox(number: "\(state.popupsBlocked.formatted())", title: "Pop-up/Redirect diệt", icon: "xmark.circle.fill")
-                statBox(number: "\(state.totalActiveRules.formatted()) / 150K", title: "Quy tắc hoạt động", icon: "checklist")
+                statBox(
+                    number: "\(state.stats.popupsBlocked.formatted())",
+                    title: "Pop-up/Redirect diệt",
+                    icon: "xmark.circle.fill"
+                )
+                statBox(
+                    number: "\(state.totalActiveRules.formatted())",
+                    title: "Quy tắc hoạt động",
+                    icon: "checklist"
+                )
             }
         }
     }
@@ -136,6 +151,34 @@ struct ContentView: View {
         .background(KBlockTheme.surface)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 3)
+    }
+
+    private var appGroupWarningCard: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 22))
+                .foregroundColor(.orange)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Thiếu App Group")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(KBlockTheme.textPrimary)
+
+                Text("Cài đặt trong app chưa đồng bộ sang tiện ích Safari. Hãy build lại với App Group capability (xem README-XCODE).")
+                    .font(.system(size: 12))
+                    .foregroundColor(KBlockTheme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer()
+        }
+        .padding(16)
+        .background(KBlockTheme.surface)
+        .cornerRadius(18)
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.orange.opacity(0.4), lineWidth: 1)
+        )
     }
 
     private var setupNoticeCard: some View {
@@ -176,11 +219,37 @@ struct ContentView: View {
     private var navigationSection: some View {
         VStack(spacing: 12) {
             NavigationLink(destination: FilterListsView()) {
-                menuRow(icon: "list.bullet.rectangle.portrait.fill", title: "Bộ lọc quảng cáo", subtitle: "\(state.totalActiveRules.formatted()) quy tắc đang hoạt động")
+                menuRow(
+                    icon: "list.bullet.rectangle.portrait.fill",
+                    title: "Bộ lọc quảng cáo",
+                    subtitle: "\(state.totalActiveRules.formatted()) quy tắc đóng gói đang chạy"
+                )
+            }
+
+            NavigationLink(destination: CustomRulesView()) {
+                menuRow(
+                    icon: "slider.horizontal.3",
+                    title: "Bộ lọc tùy chỉnh",
+                    subtitle: "\(state.customRules.count) quy tắc của bạn"
+                )
             }
 
             NavigationLink(destination: WhitelistView()) {
-                menuRow(icon: "shield.lefthalf.filled", title: "Danh sách trắng (Whitelist)", subtitle: "\(state.whitelist.count) tên miền được cho phép")
+                menuRow(
+                    icon: "shield.lefthalf.filled",
+                    title: "Danh sách trắng (Whitelist)",
+                    subtitle: "\(state.whitelist.count) tên miền được cho phép"
+                )
+            }
+
+            NavigationLink(destination: ActivityLogView()) {
+                menuRow(
+                    icon: "clock.arrow.circlepath",
+                    title: "Nhật ký chặn",
+                    subtitle: state.activity.isEmpty
+                        ? "Chưa có sự kiện nào được ghi"
+                        : "Sự kiện mới nhất: \(state.activity.last?.host ?? "")"
+                )
             }
         }
     }
@@ -204,6 +273,7 @@ struct ContentView: View {
                 Text(subtitle)
                     .font(.system(size: 12))
                     .foregroundColor(KBlockTheme.textSecondary)
+                    .lineLimit(1)
             }
 
             Spacer()
@@ -220,7 +290,7 @@ struct ContentView: View {
 
     private var footerSection: some View {
         VStack(spacing: 6) {
-            Text("KBlock v0.1.0 • Mã nguồn mở MPL-2.0")
+            Text("KBlock v0.2.0 • Mã nguồn mở MPL-2.0")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(KBlockTheme.textSecondary)
 
