@@ -50,10 +50,18 @@ interface DnrRule {
 const STATIC_RULESET_IDS = ['base_rules', 'abpvn_rules', 'gambling_rules'];
 
 /** Rulesets produced by scripts/build-filters.mjs (stubbed if pipeline hasn't run). */
-const GENERATED_RULESETS: Array<{ id: string; file: string; category: 'abpvn' | 'easylist' }> = [
+const GENERATED_RULESETS: Array<{
+  id: string;
+  file: string;
+  category: 'abpvn' | 'easylist' | 'tracking' | 'annoyances';
+}> = [
   { id: 'abpvn_full_rules', file: 'rules/generated/abpvn_full.json', category: 'abpvn' },
   { id: 'easylist_full_rules', file: 'rules/generated/easylist_full.json', category: 'easylist' },
-  { id: 'easyprivacy_full_rules', file: 'rules/generated/easyprivacy_full.json', category: 'easylist' },
+  { id: 'adguard_mobile_rules', file: 'rules/generated/adguard_mobile_full.json', category: 'easylist' },
+  { id: 'easyprivacy_full_rules', file: 'rules/generated/easyprivacy_full.json', category: 'tracking' },
+  { id: 'adguard_spyware_rules', file: 'rules/generated/adguard_spyware_full.json', category: 'tracking' },
+  { id: 'adguard_urltracking_rules', file: 'rules/generated/adguard_urltracking_full.json', category: 'tracking' },
+  { id: 'fanboy_annoyance_rules', file: 'rules/generated/fanboy_annoyance_full.json', category: 'annoyances' },
 ];
 
 const WHITELIST_RULE_ID_BASE = 10000;
@@ -261,20 +269,20 @@ async function syncRulesets(enabled: boolean, categories: FilterCategories): Pro
     };
 
     toggle(['base_rules'], categories.easylist);
-    if (generatedProbe?.available) {
-      toggle(
-        GENERATED_RULESETS.filter((g) => g.category === 'easylist').map((g) => g.id),
-        categories.easylist,
-      );
-    }
-    toggle(['abpvn_rules'], categories.abpvn);
-    if (generatedProbe?.available) {
-      toggle(
-        GENERATED_RULESETS.filter((g) => g.category === 'abpvn').map((g) => g.id),
-        categories.abpvn,
-      );
-    }
     toggle(['gambling_rules'], categories.gambling);
+    toggle(['abpvn_rules'], categories.abpvn);
+    for (const group of ['easylist', 'tracking', 'annoyances'] as const) {
+      const on =
+        group === 'easylist'
+          ? categories.easylist
+          : group === 'tracking'
+            ? categories.tracking
+            : categories.annoyances;
+      toggle(
+        GENERATED_RULESETS.filter((g) => g.category === group).map((g) => g.id),
+        on,
+      );
+    }
 
     const opts: { enableRulesetIds?: string[]; disableRulesetIds?: string[] } = {};
     if (enableIds.length > 0) opts.enableRulesetIds = enableIds;
@@ -454,10 +462,10 @@ async function flushStatsToNative(state: ExtensionState): Promise<void> {
   });
 }
 
-async function handleIncrementStats(payload: {
-  count: number;
-  category: 'ads' | 'popups' | 'trackers';
-}): Promise<MessageResponse> {
+async function handleIncrementStats(
+  sender: unknown,
+  payload: { count: number; category: 'ads' | 'popups' | 'trackers' },
+): Promise<MessageResponse> {
   const state = await getState();
   const count = Math.min(Math.max(payload.count || 1, 1), 500);
 
@@ -473,8 +481,45 @@ async function handleIncrementStats(payload: {
   };
 
   await savePartialState({ [STORAGE_KEYS.STATS]: newStats });
+  await bumpSiteStats(sender, count);
   await flushStatsToNative({ ...state, stats: newStats });
   return { success: true, data: newStats };
+}
+
+/** Per-site blocked counters ("Trang này đã chặn: N" in the popup). */
+async function bumpSiteStats(sender: unknown, count: number): Promise<void> {
+  try {
+    const tabUrl = (sender as { tab?: { url?: string } } | undefined)?.tab?.url;
+    if (!tabUrl) return;
+    const host = new URL(tabUrl).hostname;
+    if (!host) return;
+    const result = await browser.storage.local.get(STORAGE_KEYS.SITE_STATS);
+    const map = (result[STORAGE_KEYS.SITE_STATS] as Record<string, number>) || {};
+    map[host] = (map[host] || 0) + count;
+    const top = Object.entries(map)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 100);
+    await savePartialState({ [STORAGE_KEYS.SITE_STATS]: Object.fromEntries(top) });
+  } catch {
+    // Best-effort attribution.
+  }
+}
+
+let filterUpdatedAt: string | null | undefined;
+
+async function getFilterUpdatedAt(): Promise<string | null> {
+  if (filterUpdatedAt !== undefined) return filterUpdatedAt;
+  try {
+    const res = await fetch(browser.runtime.getURL('rules/generated/meta.json'));
+    const meta = (await res.json()) as { generatedAt?: string };
+    filterUpdatedAt =
+      typeof meta.generatedAt === 'string' && meta.generatedAt !== 'stub'
+        ? meta.generatedAt
+        : null;
+  } catch {
+    filterUpdatedAt = null;
+  }
+  return filterUpdatedAt;
 }
 
 async function handleLogActivity(payload: { type: string; url: string }): Promise<MessageResponse> {
@@ -696,7 +741,7 @@ async function initialize(): Promise<void> {
 // ─── Message Listener ─────────────────────────────────────────────────────────
 
 browser.runtime.onMessage.addListener(
-  (message: Message, _sender, sendResponse: (response: MessageResponse) => void) => {
+  (message: Message, sender, sendResponse: (response: MessageResponse) => void) => {
     const handle = async (): Promise<void> => {
       let response: MessageResponse;
 
@@ -705,11 +750,15 @@ browser.runtime.onMessage.addListener(
           case 'GET_STATE': {
             await syncFromNative();
             const state = await getState();
+            const siteStatsResult = await browser.storage.local.get(STORAGE_KEYS.SITE_STATS);
             response = {
               success: true,
               data: {
                 ...state,
                 bundledRuleCount: await getBundledRuleCount(),
+                siteStats:
+                  (siteStatsResult[STORAGE_KEYS.SITE_STATS] as Record<string, number>) || {},
+                filterUpdatedAt: await getFilterUpdatedAt(),
               },
             };
             break;
@@ -748,6 +797,7 @@ browser.runtime.onMessage.addListener(
             break;
           case 'INCREMENT_STATS':
             response = await handleIncrementStats(
+              sender,
               message.payload as { count: number; category: 'ads' | 'popups' | 'trackers' },
             );
             break;

@@ -35,7 +35,9 @@ export interface FilterCategories {
   abpvn: boolean;
   gambling: boolean;
   easylist: boolean;
-  /** Controls the cosmetic / anti-popup layer (no static DNR ruleset). */
+  /** EasyPrivacy + AdGuard Spyware/URL-tracking rulesets (network level). */
+  tracking: boolean;
+  /** Fanboy Annoyance ruleset + cosmetic/anti-popup layer. */
   annoyances: boolean;
 }
 
@@ -118,6 +120,7 @@ export const STORAGE_KEYS = {
   CUSTOM_RULES: 'kblock_custom_rules',
   ELEMENT_RULES: 'kblock_element_rules',
   ACTIVITY: 'kblock_activity',
+  SITE_STATS: 'kblock_site_stats',
   STATS: 'kblock_stats',
   CONFIG_VERSION: 'kblock_config_version',
 } as const;
@@ -130,6 +133,7 @@ export const DEFAULT_STATE: ExtensionState = {
     abpvn: true,
     gambling: true,
     easylist: true,
+    tracking: true,
     annoyances: true,
   },
   whitelist: [],

@@ -26,6 +26,10 @@ const cacheDir = join(__dirname, '..', '.filter-cache');
 const FORCE = process.argv.includes('--force');
 
 // ─── Sources (see filters/sources.json for licenses) ─────────────────────────
+//
+// Static-ruleset budget: Safari allows 150,000 DNR rules per extension.
+// Worst case with every cap hit: 55+42+15+20+12+10+2.5 ≈ 156.5K — the caps
+// below are tuned so real-world totals stay ≈ 140K (most caps never bite).
 
 const SOURCES = [
   {
@@ -45,6 +49,30 @@ const SOURCES = [
     out: 'easyprivacy_full.json',
     url: 'https://easylist.to/easylist/easyprivacy.txt',
     maxRules: 50000,
+  },
+  {
+    id: 'adguard_mobile',
+    out: 'adguard_mobile_full.json',
+    url: 'https://filters.adtidy.org/extension/chromium/filters/11.txt',
+    maxRules: 20000,
+  },
+  {
+    id: 'adguard_spyware',
+    out: 'adguard_spyware_full.json',
+    url: 'https://filters.adtidy.org/extension/chromium/filters/4.txt',
+    maxRules: 12000,
+  },
+  {
+    id: 'fanboy_annoyance',
+    out: 'fanboy_annoyance_full.json',
+    url: 'https://secure.fanboy.co.nz/fanboy-annoyance.txt',
+    maxRules: 10000,
+  },
+  {
+    id: 'adguard_urltracking',
+    out: 'adguard_urltracking_full.json',
+    url: 'https://filters.adtidy.org/extension/chromium/filters/17.txt',
+    maxRules: 2500,
   },
 ];
 
@@ -90,7 +118,10 @@ async function fetchList(source) {
       signal: AbortSignal.timeout(60000),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
+    // arrayBuffer + decode avoids undici's streaming text parser, which
+    // crashes with an internal assertion on some responses (Node 22).
+    const buf = await res.arrayBuffer();
+    const text = new TextDecoder().decode(buf);
     if (text.length < 1000) throw new Error('Response suspiciously small');
     mkdirSync(cacheDir, { recursive: true });
     writeFileSync(cachePath, text);

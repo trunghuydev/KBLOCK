@@ -36,6 +36,7 @@ public final class AppGroupManager: ObservableObject {
     @Published public var filterGambling: Bool = true { didSet { persist() } }
     @Published public var filterEasylist: Bool = true { didSet { persist() } }
     @Published public var filterAnnoyances: Bool = true { didSet { persist() } }
+    @Published public var filterTracking: Bool = true { didSet { persist() } }
     @Published public var antiPopupMode: String = "balanced" { didSet { persist() } }
     @Published public var antiTracking: Bool = true { didSet { persist() } }
     @Published public var cookieBanners: Bool = true { didSet { persist() } }
@@ -57,6 +58,7 @@ public final class AppGroupManager: ObservableObject {
         static let gambling = "kblock_filter_gambling"
         static let easylist = "kblock_filter_easylist"
         static let annoyances = "kblock_filter_annoyances"
+        static let tracking = "kblock_filter_tracking"
         static let antiPopupMode = "kblock_antipopup_mode"
         static let antiTracking = "kblock_anti_tracking"
         static let cookieBanners = "kblock_cookie_banners"
@@ -155,6 +157,7 @@ public final class AppGroupManager: ObservableObject {
         defaults.set(filterGambling, forKey: Key.gambling)
         defaults.set(filterEasylist, forKey: Key.easylist)
         defaults.set(filterAnnoyances, forKey: Key.annoyances)
+        defaults.set(filterTracking, forKey: Key.tracking)
         defaults.set(antiPopupMode, forKey: Key.antiPopupMode)
         defaults.set(antiTracking, forKey: Key.antiTracking)
         defaults.set(cookieBanners, forKey: Key.cookieBanners)
@@ -181,6 +184,7 @@ public final class AppGroupManager: ObservableObject {
         filterGambling = defaults?.object(forKey: Key.gambling) as? Bool ?? true
         filterEasylist = defaults?.object(forKey: Key.easylist) as? Bool ?? true
         filterAnnoyances = defaults?.object(forKey: Key.annoyances) as? Bool ?? true
+        filterTracking = defaults?.object(forKey: Key.tracking) as? Bool ?? true
         antiPopupMode = defaults?.string(forKey: Key.antiPopupMode) ?? "balanced"
         antiTracking = defaults?.object(forKey: Key.antiTracking) as? Bool ?? true
         cookieBanners = defaults?.object(forKey: Key.cookieBanners) as? Bool ?? true

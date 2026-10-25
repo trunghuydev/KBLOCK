@@ -25,9 +25,16 @@ struct FilterListsView: View {
                 )
 
                 filterCard(
+                    title: "🕵️ Chặn Tracker",
+                    description: "EasyPrivacy + AdGuard Spyware/URL-Tracking: chặn script theo dõi, pixel, telemetry ở mức mạng.",
+                    ruleCount: pipelineRun ? "Bản đầy đủ" : "Lớp mạng",
+                    isOn: $state.filterTracking
+                )
+
+                filterCard(
                     title: "🚫 Chống Pop-up & Khó chịu",
-                    description: "Lớp cosmetic + anti-popup + element-hide từ bộ lọc: diệt banner nổi, bẫy clickjack, pop-under.",
-                    ruleCount: "Lớp nội dung",
+                    description: "Fanboy Annoyance + lớp cosmetic + anti-popup: diệt banner nổi, bẫy clickjack, pop-under.",
+                    ruleCount: pipelineRun ? "Fanboy Annoyance" : "Lớp nội dung",
                     isOn: $state.filterAnnoyances
                 )
 

@@ -36,6 +36,7 @@
           <span class="site-domain" id="current-domain">Đang xác định...</span>
         </div>
         <span class="badge" id="site-status-pill">Đang lọc</span>
+        <span class="site-blocked" id="site-blocked">—</span>
       </div>
 
       <button class="site-btn site-btn--pause" id="whitelist-btn">
@@ -85,7 +86,7 @@
     <div class="card fine-tune-card">
       <div class="section-header">
         <span class="section-title">TINH CHỈNH BỘ LỌC</span>
-        <span class="section-badge">5 BỘ LỌC</span>
+        <span class="section-badge">6 BỘ LỌC</span>
       </div>
 
       <div class="filter-row">
@@ -134,6 +135,17 @@
 
       <div class="filter-row">
         <div class="filter-text">
+          <span class="filter-name">🕵️ Chặn tracker (EasyPrivacy + AdGuard)</span>
+          <span class="filter-desc">Chặn script theo dõi, spyware ở mức mạng</span>
+        </div>
+        <label class="ios-switch ios-switch--small">
+          <input type="checkbox" id="toggle-filter-tracking" checked />
+          <span class="ios-slider"></span>
+        </label>
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-text">
           <span class="filter-name">🍪 Chặn banner cookie</span>
           <span class="filter-desc">Ẩn popup hỏi consent, GDPR và khóa cuộn</span>
         </div>
@@ -168,7 +180,8 @@
 
     <!-- Footer -->
     <div class="sheet-footer">
-      <span>KBlock v0.2.0 • Bảo vệ quyền riêng tư 100% trên thiết bị</span>
+      <span id="filter-updated">KBlock v0.2.0</span>
+      <span>Bảo vệ quyền riêng tư 100% trên thiết bị</span>
     </div>
   </div>
 

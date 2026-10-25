@@ -75,7 +75,11 @@ function isSiteWhitelisted(state: ExtensionState, domain: string | null): boolea
 }
 
 function renderState(
-  state: ExtensionState & { bundledRuleCount?: number },
+  state: ExtensionState & {
+    bundledRuleCount?: number;
+    siteStats?: Record<string, number>;
+    filterUpdatedAt?: string | null;
+  },
   domain: string | null,
 ): void {
   const toggle = el<HTMLInputElement>('main-toggle');
@@ -140,6 +144,7 @@ function renderState(
   const toggleGambling = document.getElementById('toggle-filter-gambling') as HTMLInputElement | null;
   const toggleAnnoyances = document.getElementById('toggle-filter-annoyances') as HTMLInputElement | null;
   const toggleEasylist = document.getElementById('toggle-filter-easylist') as HTMLInputElement | null;
+  const toggleTracking = document.getElementById('toggle-filter-tracking') as HTMLInputElement | null;
   const toggleAntiTracking = document.getElementById('toggle-anti-tracking') as HTMLInputElement | null;
   const toggleCookieBanners = document.getElementById('toggle-cookie-banners') as HTMLInputElement | null;
 
@@ -147,8 +152,27 @@ function renderState(
   if (toggleGambling) toggleGambling.checked = cats.gambling;
   if (toggleAnnoyances) toggleAnnoyances.checked = cats.annoyances;
   if (toggleEasylist) toggleEasylist.checked = cats.easylist;
+  if (toggleTracking) toggleTracking.checked = cats.tracking;
   if (toggleAntiTracking) toggleAntiTracking.checked = state.antiTracking;
   if (toggleCookieBanners) toggleCookieBanners.checked = state.cookieBanners;
+
+  // Per-site blocked counter
+  const siteBlockedEl = document.getElementById('site-blocked');
+  if (siteBlockedEl) {
+    const siteCount = domain && state.siteStats ? state.siteStats[domain] || 0 : 0;
+    siteBlockedEl.textContent = domain
+      ? `🛡 Đã chặn ${siteCount.toLocaleString()} trên trang này`
+      : '—';
+  }
+
+  // Filter bundle date in the footer
+  const updatedEl = document.getElementById('filter-updated');
+  if (updatedEl) {
+    const base = 'KBlock v0.2.0';
+    updatedEl.textContent = state.filterUpdatedAt
+      ? `${base} • Bộ lọc: ${new Date(state.filterUpdatedAt).toLocaleDateString('vi-VN')}`
+      : base;
+  }
 
   // Anti-Popup Mode Segmented Control
   const segButtons = document.querySelectorAll<HTMLButtonElement>('.seg-btn');
@@ -290,6 +314,7 @@ async function init(): Promise<void> {
     setupCategoryListener('toggle-filter-gambling', 'gambling');
     setupCategoryListener('toggle-filter-annoyances', 'annoyances');
     setupCategoryListener('toggle-filter-easylist', 'easylist');
+    setupCategoryListener('toggle-filter-tracking', 'tracking');
 
     const antiTrackingCheck = document.getElementById('toggle-anti-tracking') as HTMLInputElement | null;
     antiTrackingCheck?.addEventListener('change', () => void onAntiTrackingToggle(antiTrackingCheck.checked));

@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "lastUpdated": "2026-10-22",
+  "lastUpdated": "2026-10-25",
   "sources": [
     {
       "id": "abpvn",
@@ -43,6 +43,62 @@
       "enabled": false,
       "status": "pending-legal-review",
       "notes": "CC-BY-SA 3.0. Same terms as EasyList."
+    },
+    {
+      "id": "adguard-mobile",
+      "name": "AdGuard Mobile Filter",
+      "url": "https://filters.adtidy.org/extension/chromium/filters/11.txt",
+      "license": "GPL-3.0",
+      "licenseUrl": "https://github.com/AdguardTeam/AdguardFilters/blob/master/LICENSE",
+      "homepage": "https://adguard.com/blog/adguard-filters.html",
+      "format": "adguard",
+      "priority": "high",
+      "focus": "Mobile-specific ads and trackers",
+      "enabled": false,
+      "status": "pending-legal-review",
+      "notes": "GPL-3.0. Downloaded at build time by the pipeline; never committed."
+    },
+    {
+      "id": "adguard-spyware",
+      "name": "AdGuard Spyware Filter (Tracking Protection)",
+      "url": "https://filters.adtidy.org/extension/chromium/filters/4.txt",
+      "license": "GPL-3.0",
+      "licenseUrl": "https://github.com/AdguardTeam/AdguardFilters/blob/master/LICENSE",
+      "homepage": "https://adguard.com/blog/adguard-filters.html",
+      "format": "adguard",
+      "priority": "high",
+      "focus": "Counters, telemetry, analytics",
+      "enabled": false,
+      "status": "pending-legal-review",
+      "notes": "GPL-3.0. Downloaded at build time; never committed."
+    },
+    {
+      "id": "fanboy-annoyance",
+      "name": "Fanboy's Annoyance List",
+      "url": "https://secure.fanboy.co.nz/fanboy-annoyance.txt",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "homepage": "https://fanboy.co.nz/",
+      "format": "easylist",
+      "priority": "medium",
+      "focus": "Cookie notices, in-page popups, social widgets",
+      "enabled": false,
+      "status": "pending-legal-review",
+      "notes": "CC-BY 3.0, attribution in THIRD_PARTY_NOTICES.md. Downloaded at build time."
+    },
+    {
+      "id": "adguard-urltracking",
+      "name": "AdGuard URL Tracking Filter",
+      "url": "https://filters.adtidy.org/extension/chromium/filters/17.txt",
+      "license": "GPL-3.0",
+      "licenseUrl": "https://github.com/AdguardTeam/AdguardFilters/blob/master/LICENSE",
+      "homepage": "https://adguard.com/blog/adguard-filters.html",
+      "format": "adguard",
+      "priority": "medium",
+      "focus": "Tracking parameters in URLs (removeparam)",
+      "enabled": false,
+      "status": "pending-legal-review",
+      "notes": "GPL-3.0. Mostly $removeparam rules — limited conversion until the engine supports it."
     }
   ]
 }

@@ -30,6 +30,7 @@ public class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         static let gambling = "kblock_filter_gambling"
         static let easylist = "kblock_filter_easylist"
         static let annoyances = "kblock_filter_annoyances"
+        static let tracking = "kblock_filter_tracking"
         static let antiPopupMode = "kblock_antipopup_mode"
         static let antiTracking = "kblock_anti_tracking"
         static let cookieBanners = "kblock_cookie_banners"
@@ -99,6 +100,7 @@ public class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             "gambling": d.object(forKey: Key.gambling) as? Bool ?? true,
             "easylist": d.object(forKey: Key.easylist) as? Bool ?? true,
             "annoyances": d.object(forKey: Key.annoyances) as? Bool ?? true,
+            "tracking": d.object(forKey: Key.tracking) as? Bool ?? true,
         ]
 
         var response: [String: Any] = [
@@ -163,6 +165,7 @@ public class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             if let v = categories["gambling"] as? Bool { d.set(v, forKey: Key.gambling) }
             if let v = categories["easylist"] as? Bool { d.set(v, forKey: Key.easylist) }
             if let v = categories["annoyances"] as? Bool { d.set(v, forKey: Key.annoyances) }
+            if let v = categories["tracking"] as? Bool { d.set(v, forKey: Key.tracking) }
         }
         if let mode = payload["antiPopupMode"] as? String {
             d.set(mode, forKey: Key.antiPopupMode)

@@ -68,6 +68,26 @@
         "id": "easyprivacy_full_rules",
         "enabled": true,
         "path": "rules/generated/easyprivacy_full.json"
+      },
+      {
+        "id": "adguard_mobile_rules",
+        "enabled": true,
+        "path": "rules/generated/adguard_mobile_full.json"
+      },
+      {
+        "id": "adguard_spyware_rules",
+        "enabled": true,
+        "path": "rules/generated/adguard_spyware_full.json"
+      },
+      {
+        "id": "fanboy_annoyance_rules",
+        "enabled": true,
+        "path": "rules/generated/fanboy_annoyance_full.json"
+      },
+      {
+        "id": "adguard_urltracking_rules",
+        "enabled": true,
+        "path": "rules/generated/adguard_urltracking_full.json"
       }
     ]
   },

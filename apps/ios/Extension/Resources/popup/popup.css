@@ -419,3 +419,12 @@ body.extension-disabled .status-main {
   color: var(--text-caption);
   padding-top: 4px;
 }
+
+/* ─── Per-site blocked counter (under the website card row) ─── */
+.site-blocked {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+}
