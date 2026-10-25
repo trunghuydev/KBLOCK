@@ -131,16 +131,38 @@ const PURE_DOMAIN_FILTER = /^\|\|[\p{L}\p{N}][\p{L}\p{N}\-.]*\^?$/u;
  * ABP options suffix that was never stripped — such rules are no-ops. */
 const ARTIFACT_OPTIONS = /\$[a-z][a-z\-]*(,[a-z][a-z\-]*)+$/i;
 
+/**
+ * Global navigation guard: EasyList/EasyPrivacy contain thousands of broad
+ * patterns ("-assets/ads.", "&track=...") and their rules carry no
+ * resourceTypes, so DNR would match MAIN_FRAME too and pages would fail to
+ * load. Converter skips $popup/$document rules, so NOTHING intentionally
+ * blocks main_frame — one high-priority allow rule makes navigation always
+ * possible while every subresource rule still applies.
+ * (priority 2 beats the converted block rules at priority 1, but stays below
+ * custom user rules at 100 and the whitelist at 3000.)
+ */
+const MAIN_FRAME_ALLOW_RULE = {
+  id: 999999,
+  priority: 2,
+  action: { type: 'allow' },
+  condition: { resourceTypes: ['main_frame'] },
+};
+
 function slimRule(rule) {
   const condition = rule.condition || {};
   const urlFilter = condition.urlFilter;
 
-  // Skip parse artifacts (filter text with a raw $options suffix).
-  if (urlFilter && ARTIFACT_OPTIONS.test(urlFilter)) return null;
+  // Skip parse artifacts (filter text with a raw $options suffix) and
+  // list-header lines like "[Adblock Plus 2.0]" leaking through as patterns.
+  if (urlFilter && (ARTIFACT_OPTIONS.test(urlFilter) || urlFilter.startsWith('['))) return null;
 
-  // Block rules don't need priority 100 — allow rules beat blocks at equal
-  // or lower priority anyway, so priority 1 keeps semantics and saves bytes.
-  const slim = rule.action?.type === 'block' ? { ...rule, priority: 1 } : rule;
+  // Block rules don't need priority 100 — the main-frame allow guard at
+  // priority 2 must stay above them, and allow rules beat blocks at equal
+  // priority anyway. Priority 1 keeps semantics and saves bytes.
+  let slim = rule;
+  if (rule.action?.type === 'block') {
+    slim = { ...rule, priority: 1 };
+  }
 
   if (
     urlFilter &&
@@ -223,7 +245,7 @@ for (const source of SOURCES) {
   const converted = convert(parsed);
 
   const rules = sanitizeDnrRules(stripDebugComments(converted.rules), source.maxRules);
-  writeFileSync(join(outDir, source.out), JSON.stringify(rules));
+  writeFileSync(join(outDir, source.out), JSON.stringify([...rules, MAIN_FRAME_ALLOW_RULE]));
 
   let globalCount = 0;
   for (const entry of converted.elementHideSelectors) {
