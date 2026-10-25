@@ -31,7 +31,7 @@
    * substrings like "88" or "bet" that wreck legitimate URLs.
    */
   const AD_HOST_REGEX =
-    /kubet|thabet|sunwin|go88|bk8|fun88|12bet|fb88|dafabet|jun88|789bet|new88|hi88|shbet|f8bet|nohu|gamebai|taixiu|keonhacai|vsbet|okvip|i9bet|79king|mb66|win55|hello88|sonclub|bong88|sv388|qq88|popads|popcash|popmyads|propellerclick|propellerads|adsterra|monetag|clickadu|hilltopads|exoclick|juicyads|push-mania|revcontent|adservice|adsserver|zedo|adnxs|rubiconproject|pubmatic|criteo|outbrain\.com|taboola\.com/i;
+    /kubet|thabet|sunwin|go88|bk8|fun88|12bet|fb88|dafabet|jun88|789bet|new88|hi88|shbet|f8bet|nohu|gamebai|taixiu|keonhacai|vsbet|okvip|i9bet|79king|mb66|win55|hello88|sonclub|cm88|sc88|sun88|gem88|sin88|ee88|b52|hubet|mu88|789club|hitclub|sunclub|bong88|sv388|qq88|popads|popcash|popmyads|propellerclick|propellerads|adsterra|monetag|clickadu|hilltopads|exoclick|juicyads|push-mania|revcontent|adservice|adsserver|zedo|adnxs|rubiconproject|pubmatic|criteo|outbrain\.com|taboola\.com/i;
 
   /**
    * Redirect-trap heuristic: a same-origin URL that funnels through a
@@ -115,17 +115,10 @@
       return originalWindowOpen.call(window, targetUrl, target, features);
     };
 
+    // Plain assignment on purpose: freezing (defineProperty writable:false)
+    // broke legit site JS (Google search click handlers stopped working).
+    // Sites that re-hijack window.open are handled by the click capture below.
     window.open = wrappedOpen as typeof window.open;
-
-    try {
-      Object.defineProperty(window, 'open', {
-        configurable: false,
-        writable: false,
-        value: wrappedOpen,
-      });
-    } catch {
-      // Freeze not allowed — the assignment above still holds.
-    }
   } catch (err) {
     console.error('[KBlock Main] Failed to hook window.open:', err);
   }

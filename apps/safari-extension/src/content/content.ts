@@ -73,6 +73,12 @@ function isCookieActive(): boolean {
 // ─── 0. Main World Script Injection ──────────────────────────────────────────
 
 function injectMainWorldProtection(): void {
+  // The main-world script only helps on content sites; on search engines it
+  // risks breaking their JS (e.g. frozen window.open) for zero benefit.
+  if (/(^|\.)?(google|bing|duckduckgo|yandex|coccoc)\./i.test(window.location.hostname) ||
+      /search\.yahoo/i.test(window.location.hostname)) {
+    return;
+  }
   const script = document.createElement('script');
   script.src = browser.runtime.getURL('content/injected.js');
   script.async = false;
@@ -104,12 +110,20 @@ const BETTING_BRANDS = [
   'dafabet', 'jun88', '789bet', 'new88', 'hi88', 'shbet', 'f8bet',
   'nohu', 'gamebai', 'taixiu', 'keonhacai', 'vsbet', 'okvip',
   'i9bet', '79king', 'mb66', 'win55', 'hello88', 'sonclub', 'qqlive',
+  'cm88', 'sc88', 'sun88', 'gem88', 'sin88', 'ee88', 'b52', 'hubet',
+  'vinbet', 'mksport', 'mu88', 'mm99', '789club', 'hitclub', 'sunclub',
 ];
 
 /** Generic gambling words — only matched in hostnames, never in paths. */
 const BETTING_HOST_WORDS = ['casino', 'bong88', 'sv388', 'qq88', 'b29'];
 
 const BETTING_BRANDS_CSS = BETTING_BRANDS.map((b) => `[href*="${b}"], [src*="${b}"]`).join(', ');
+
+/** Brand tokens in alt/title/aria-label text — catches banners whose image
+ * src is proxied but whose alt text names the brand ("vsbet banner"). */
+const BETTING_TEXT_CSS = BETTING_BRANDS.map(
+  (b) => `img[alt*="${b}" i], img[title*="${b}" i], a[aria-label*="${b}" i], [title*="${b}" i]`,
+).join(', ');
 
 const AD_SELECTORS = [
   'ins.adsbygoogle',
@@ -133,6 +147,7 @@ const AD_SELECTORS = [
   '.catfish-banner', '.floating-banner', '.sticky-banner',
   '#bn_bottom_fixed_', '.section-catfish',
   BETTING_BRANDS_CSS,
+  BETTING_TEXT_CSS,
 ];
 
 const HIDE_CSS = 'display:none!important;visibility:hidden!important;height:0!important;' +
@@ -484,6 +499,35 @@ function generateSelector(el: Element): string | null {
 // ─── 5. DOM Sweep (throttled) ─────────────────────────────────────────────────
 
 const BETTING_BRANDS_REGEX = new RegExp(BETTING_BRANDS.join('|'), 'i');
+const BETTING_SWEEP_REGEX = new RegExp(BETTING_BRANDS.join('|'), 'i');
+
+/** alt/title/aria-label text of the element's subtree — brands hide there
+ * after the image itself is gone ("vsbet banner", "Sun88 banner top"). */
+function brandAltText(el: Element): string {
+  const parts: string[] = [];
+  el.querySelectorAll?.('img[alt], img[title], [aria-label]').forEach((n) => {
+    parts.push(n.getAttribute('alt') || '', n.getAttribute('title') || '', n.getAttribute('aria-label') || '');
+  });
+  return parts.join(' ').slice(0, 400);
+}
+
+/** Hide the closest sized wrapper (up to 3 levels) so the empty ad box dies
+ * together with its image. */
+function hideAdWrapper(el: Element): void {
+  let node: Element | null = el;
+  for (let i = 0; i < 3 && node; i++) {
+    const htmlEl = node as HTMLElement;
+    const rect = htmlEl.getBoundingClientRect();
+    if (i > 0 && (rect.width < 60 || rect.height < 40)) break;
+    const key = `${htmlEl.className} ${htmlEl.id}`.toLowerCase();
+    if (i === 2 || /banner|qc|ads|adv|promo|box|item/.test(key)) {
+      htmlEl.style.setProperty('display', 'none', 'important');
+      return;
+    }
+    node = node.parentElement;
+  }
+  (el as HTMLElement).style.setProperty('display', 'none', 'important');
+}
 const BETTING_HOST_REGEX = new RegExp([...BETTING_BRANDS, ...BETTING_HOST_WORDS].join('|'), 'i');
 
 let sweepScheduled = false;
@@ -540,6 +584,38 @@ function cleanAdElements(): void {
         cleaned++;
       }
     });
+
+  // 4. Betting ad CONTAINERS — sites wrap banners in boxes whose class/id
+  //    mentions banner/qc/ads while the brand only shows in alt text (the
+  //    empty "vsbet banner" boxes left behind after image hiding).
+  if (cleaned < 200) {
+    document
+      .querySelectorAll('[class*="banner"], [id*="banner"], [class*="qc"], [id*="qc"], [class*="adv"], [class*="-ads"], [class*="ads-"], [class*="ads_"]')
+      .forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        if (htmlEl.dataset.kblockHidden) return;
+        const text = `${(el.textContent || '').slice(0, 300)} ${brandAltText(el)}`;
+        if (text.length > 500) return;
+        if (BETTING_SWEEP_REGEX.test(text)) {
+          htmlEl.style.setProperty('display', 'none', 'important');
+          htmlEl.dataset.kblockHidden = '1';
+          cleaned++;
+        }
+      });
+
+    // Brand-named images (alt/src) — hide their wrapper box too.
+    document.querySelectorAll('img[alt], img[title]').forEach((img) => {
+      const htmlImg = img as HTMLElement;
+      if (htmlImg.dataset.kblockHidden) return;
+      const label = `${img.getAttribute('alt') || ''} ${img.getAttribute('title') || ''}`;
+      if (label.length > 120) return;
+      if (BETTING_SWEEP_REGEX.test(label)) {
+        hideAdWrapper(img);
+        htmlImg.dataset.kblockHidden = '1';
+        cleaned++;
+      }
+    });
+  }
 
   if (cleaned > 0) {
     void sendMessage({

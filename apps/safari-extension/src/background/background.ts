@@ -48,7 +48,7 @@ interface DnrRule {
   condition: DnrCondition;
 }
 
-const STATIC_RULESET_IDS = ['base_rules', 'abpvn_rules', 'gambling_rules'];
+const STATIC_RULESET_IDS = ['base_rules', 'abpvn_rules', 'gambling_rules', 'betting_guard_rules'];
 
 /** Rulesets produced by scripts/build-filters.mjs (stubbed if pipeline hasn't run). */
 const GENERATED_RULESETS: Array<{
@@ -275,7 +275,7 @@ async function syncRulesets(enabled: boolean, categories: FilterCategories): Pro
     };
 
     toggle(['base_rules'], categories.easylist);
-    toggle(['gambling_rules'], categories.gambling);
+    toggle(['gambling_rules', 'betting_guard_rules'], categories.gambling);
     toggle(['abpvn_rules'], categories.abpvn);
     for (const group of ['easylist', 'tracking', 'annoyances'] as const) {
       const on =
@@ -403,7 +403,7 @@ async function getBundledRuleCount(): Promise<number> {
   if (bundledRuleCount !== null) return bundledRuleCount;
   try {
     let total = 0;
-    for (const id of ['base', 'abpvn', 'gambling']) {
+    for (const id of ['base', 'abpvn', 'gambling', 'betting_guard']) {
       const res = await fetch(browser.runtime.getURL(`rules/${id}.json`));
       const rules = (await res.json()) as unknown;
       total += Array.isArray(rules) ? rules.length : 0;

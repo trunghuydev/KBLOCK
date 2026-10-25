@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "priority": 300,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "regexFilter": "^[a-z]+://[^/?]*(vsbet|cm88|sun88|sc88|sunwin|kubet|thabet|go88|hi88|789bet|new88|f8bet|i9bet|79king|okvip|hubet|mu88|789club|hitclub|sunclub|bong88|sv388|qq88|fun88|bk8|12bet|fb88|dafabet|jun88|shbet|sin88|gem88|ee88|nohu|gamebai|taixiu|keonhacai|b52)",
+      "isUrlFilterCaseSensitive": false,
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame"
+      ]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 300,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "vsbet.com",
+        "cm88.vip",
+        "sun88.com",
+        "sc88.vip",
+        "sunwin.vip",
+        "kubet.vip",
+        "go88.vip",
+        "hi88.vip",
+        "789bet.vip",
+        "new88.vip",
+        "f8bet.vip",
+        "i9bet.vip",
+        "okvip.io",
+        "789club.vip",
+        "hitclub.vip",
+        "b52.club",
+        "fun88.vip",
+        "bk8.vip"
+      ],
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame"
+      ]
+    }
+  }
+]

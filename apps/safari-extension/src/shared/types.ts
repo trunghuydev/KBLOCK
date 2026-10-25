@@ -163,4 +163,4 @@ export const DEFAULT_STATE: ExtensionState = {
 };
 
 /** Fallback count used if the bundled ruleset files cannot be read at runtime. */
-export const FALLBACK_BUNDLED_RULE_COUNT = 87;
+export const FALLBACK_BUNDLED_RULE_COUNT = 89;

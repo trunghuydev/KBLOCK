@@ -93,6 +93,11 @@
         "id": "removeparam_rules",
         "enabled": true,
         "path": "rules/generated/removeparam_rules.json"
+      },
+      {
+        "id": "betting_guard_rules",
+        "enabled": true,
+        "path": "rules/betting_guard.json"
       }
     ]
   },
