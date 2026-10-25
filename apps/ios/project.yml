@@ -70,7 +70,21 @@ targets:
     platform: iOS
     sources:
       - path: Extension/SafariWebExtensionHandler.swift
-      - path: Extension/Resources
+      # Flat layout: manifest.json at the appex root, each web-extension
+      # folder as its own folder reference (a nested "Resources" dir makes
+      # the appex a non-standard shallow bundle and breaks validation).
+      - path: Extension/Resources/manifest.json
+        buildPhase: resources
+      - path: Extension/Resources/background
+        type: folder
+        buildPhase: resources
+      - path: Extension/Resources/content
+        type: folder
+        buildPhase: resources
+      - path: Extension/Resources/popup
+        type: folder
+        buildPhase: resources
+      - path: Extension/Resources/rules
         type: folder
         buildPhase: resources
     settings:
